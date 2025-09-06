@@ -1,5 +1,7 @@
 package org.example.model;
 
+import org.example.util.PriceUtil;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
