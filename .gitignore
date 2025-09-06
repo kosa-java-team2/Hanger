@@ -1,0 +1,70 @@
+############################
+# Build Tools
+############################
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Gradle (혼용/전환 대비)
+.gradle/
+build/
+
+############################
+# IntelliJ IDEA
+############################
+# 프로젝트 설정은 팀마다 관리 방식이 달라 전체 폴더 제외가 안전합니다.
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+############################
+# Eclipse / STS
+############################
+.project
+.classpath
+.settings/
+.apt_generated/
+.factorypath
+.springBeans/
+.sts4-cache/
+bin/
+
+############################
+# VS Code
+############################
+.vscode/
+
+############################
+# NetBeans (사용 시)
+############################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+############################
+# OS-specific
+############################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+############################
+# Logs & Temp
+############################
+logs/
+*.log
+*.swp
+*.swo
