@@ -1,5 +1,7 @@
 package org.example.model;
 
+import org.example.util.PriceUtil;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -46,6 +48,7 @@ public class Post implements Serializable {
     public ConditionLevel getCondition() { return condition; }
     public String getDescription() { return description; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
     public boolean isDeleted() { return isDeleted; }
 
     public void setTitle(String title) { this.title = title; touch(); }

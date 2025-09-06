@@ -1,7 +1,6 @@
 package org.example.datastore;
 
-import org.example.model.Post;
-import org.example.model.User;
+import org.example.model.*;
 
 import java.io.*;
 import java.util.*;

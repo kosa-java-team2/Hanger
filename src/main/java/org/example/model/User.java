@@ -30,6 +30,14 @@ public class User implements Serializable {
     private String salt;         // Base64
     private String passwordHash; // Base64
 
+    // 메타
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    // 신뢰도
+    private int trustGood;
+    private int trustBad;
+
     public User() {}
 
     public User(String id, String nickname, String name, String rrn, int age, String gender,
@@ -43,6 +51,8 @@ public class User implements Serializable {
         this.salt = salt;
         this.passwordHash = passwordHash;
         this.role = role != null ? role : Role.MEMBER;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
     }
 
     // getters/setters
@@ -55,9 +65,16 @@ public class User implements Serializable {
     public Role getRole() { return role; }
     public String getSalt() { return salt; }
     public String getPasswordHash() { return passwordHash; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public int getTrustGood() { return trustGood; }
+    public int getTrustBad() { return trustBad; }
 
     public void setNickname(String nickname) { this.nickname = nickname; }
     public void setRole(Role role) { this.role = role; }
+    public void touch() { this.updatedAt = LocalDateTime.now(); }
+    public void addTrustGood() { this.trustGood++; touch(); }
+    public void addTrustBad() { this.trustBad++; touch(); }
 
     @Override
     public boolean equals(Object o) {
@@ -70,7 +87,8 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("User{id='%s', nick='%s', age=%d, gender=%s, role=%s}", id, nickname, age, gender, role);
+        return String.format("User{id='%s', nick='%s', age=%d, gender=%s, role=%s, createdAt=%s, trust(G:%d,B:%d)}",
+                id, nickname, age, gender, role, createdAt, trustGood, trustBad);
     }
 }
 
