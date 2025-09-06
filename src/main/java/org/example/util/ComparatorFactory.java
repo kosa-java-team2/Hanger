@@ -1,7 +1,5 @@
 package org.example.util;
 
-import org.example.model.Post;
-
 import java.util.Comparator;
 
 public class ComparatorFactory {
