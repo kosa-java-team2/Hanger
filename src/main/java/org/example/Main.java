@@ -1,5 +1,13 @@
 package org.example;
 
+import org.example.datastore.DataStore;
+import org.example.model.Role;
+import org.example.model.User;
+import org.example.service.AdminService;
+import org.example.service.AuthService;
+import org.example.service.PostService;
+import org.example.util.InputUtil;
+
 import java.util.Scanner;
 
 public class Main {
@@ -11,7 +19,7 @@ public class Main {
     private final Scanner sc = new Scanner(System.in);
 
     public static void main(String[] args) {
-        new HangerApp().run();
+        new Main().run();
     }
 
     private void run() {
