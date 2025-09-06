@@ -1,4 +1,4 @@
-package hanger;
+package org.example.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

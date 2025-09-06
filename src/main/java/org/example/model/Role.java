@@ -1,3 +1,3 @@
-package hanger;
+package org.example.model;
 
 public enum Role { MEMBER, ADMIN }
