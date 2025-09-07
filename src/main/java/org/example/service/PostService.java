@@ -17,7 +17,7 @@ public class PostService {
 
     // 금칙어 예시(원하는 단어로 교체하세요)
     private static final Set<String> BANNED = new HashSet<>(Arrays.asList(
-        "금지어", "비속어", "욕설" // 예시. 프로젝트에 맞게 확장하세요.
+            "금지어", "비속어", "욕설" // 예시. 프로젝트에 맞게 확장하세요.
     ));
 
     public PostService(DataStore store) {
@@ -45,126 +45,197 @@ public class PostService {
         String location = InputUtil.readNonEmptyLine("원하는 거래위치: ");
 
         int postId = store.nextPostId();
-        Post p = new Post(postId, title, category, price, user.getId(), location, cond, desc);
+        Post p = new Post.Builder(postId, user.getId())
+                .title(title)
+                .category(category)
+                .price(price)
+                .location(location)
+                .condition(cond)
+                .description(desc)
+                .build();
+
         store.posts().put(postId, p);
         store.saveAll();
         System.out.println("======================");
         System.out.println("게시물이 등록되었습니다! (번호: " + postId + ")");
     }
 
-    // 검색/조회 (간단한 검색 + 정렬)
+    // ====================== 리팩터링된 검색/조회 ======================
     public void searchAndView(User me) {
         System.out.println("====== 상품 검색 ======");
         System.out.print("검색어(빈칸=전체): ");
-        String kw = InputUtil.readLine();
-        final String keyword = (kw == null) ? "" : kw.trim();
+        final String keyword = Optional.ofNullable(InputUtil.readLine()).orElse("").trim();
 
-        List<Post> base = store.posts().values().stream()
-                .filter(p -> !p.isDeleted() && p.getStatus() != PostStatus.COMPLETED)
-                .filter(p -> keyword.isEmpty()
-                        || p.getTitle().toLowerCase().contains(keyword.toLowerCase())
-                        || p.getDescription().toLowerCase().contains(keyword.toLowerCase()))
-                .filter(p -> me == null || !p.getSellerId().equals(me.getId())) // 내 글 제외
-                .collect(Collectors.toList());
-
+        List<Post> base = filteredPosts(me, keyword);
         if (base.isEmpty()) {
             System.out.println("검색 결과 없음");
             return;
         }
 
-        // 기본 정렬: 최신순
-        int sortOpt = 3;
-        Comparator<Post> cmp = ComparatorFactory.of(sortOpt);
-        base.sort(cmp);
+        int sortOpt = 3; // 기본: 최신순
+        base.sort(ComparatorFactory.of(sortOpt));
 
         final int pageSize = 10;
         int currentPage = 1;
 
         while (true) {
-            int total = base.size();
-            int totalPages = (total + pageSize - 1) / pageSize;
-            if (totalPages == 0) totalPages = 1;
-            if (currentPage < 1) currentPage = 1;
-            if (currentPage > totalPages) currentPage = totalPages;
+            Page page = paginate(base, currentPage);
+            renderPageHeader(page.total, page.currentPage, page.totalPages, sortOpt);
+            renderPosts(page.items);
 
-            int fromIndex = (currentPage - 1) * pageSize;
-            int toIndex = Math.min(fromIndex + pageSize, total);
+            Command cmd = readCommand();
+            if (cmd == Command.EXIT) return;
 
-            System.out.println("======================");
-            System.out.println("총 " + total + "건 | 페이지 " + currentPage + "/" + totalPages + " | 정렬: " + sortLabel(sortOpt));
-            for (int i = fromIndex; i < toIndex; i++) {
-                Post p = base.get(i);
-                User seller = store.users().get(p.getSellerId());
-                String sellerNick = seller != null ? seller.getNickname() : p.getSellerId();
-                String rank = seller != null ? getUserRank(seller) : "";
-                System.out.println(String.format("[%d] %s | %s | %s원 | %s | %s%s | %s",
-                        p.getPostId(),
-                        p.getTitle(),
-                        p.getCategory(),
-                        PriceUtil.format(p.getPrice()),
-                        p.getStatus(),
-                        sellerNick,
-                        rank.isEmpty() ? "" : " (" + rank + ")",
-                        p.getCreatedAt()));
-            }
-            System.out.println("----------------------");
-            System.out.println("명령: n=다음, p=이전, s=정렬변경, g=페이지이동, v=상세조회, r=거래요청, 0=뒤로");
-            String cmd = InputUtil.readLine();
-            if (cmd == null) cmd = "";
-            cmd = cmd.trim().toLowerCase();
-
-            if (cmd.equals("0")) {
-                return;
-            } else if (cmd.equals("n")) {
-                if (currentPage < totalPages) currentPage++;
-                else System.out.println("마지막 페이지입니다.");
-            } else if (cmd.equals("p")) {
-                if (currentPage > 1) currentPage--;
-                else System.out.println("첫 페이지입니다.");
-            } else if (cmd.equals("s")) {
-                System.out.println("정렬 방식을 선택하세요: 1.가격낮은순 2.가격높은순 3.최신순 4.카테고리");
-                int opt = InputUtil.readIntInRange("선택: ", 1, 4);
-                sortOpt = opt;
-                cmp = ComparatorFactory.of(sortOpt);
-                base.sort(cmp);
-                currentPage = 1;
-            } else if (cmd.equals("g")) {
-                int move = InputUtil.readIntInRange("이동할 페이지(1-" + totalPages + "): ", 1, totalPages);
-                currentPage = move;
-            } else if (cmd.equals("v")) {
-                int pid = InputUtil.readInt("상세조회할 게시글 번호(0=취소): ");
-                if (pid == 0) continue;
-                Post sel = store.posts().get(pid);
-                if (sel == null || sel.isDeleted()) {
-                    System.out.println("해당 게시글이 존재하지 않습니다.");
-                } else {
-                    printDetail(sel);
+            switch (cmd) {
+                case NEXT -> currentPage = nextPage(currentPage, page.totalPages);
+                case PREV -> currentPage = prevPage(currentPage);
+                case SORT -> {
+                    sortOpt = readSortOption();
+                    base.sort(ComparatorFactory.of(sortOpt));
+                    currentPage = 1;
                 }
-            } else if (cmd.equals("r")) {
-                int pid = InputUtil.readInt("거래요청할 게시글 번호(0=취소): ");
-                if (pid == 0) continue;
-                Post sel = store.posts().get(pid);
-                if (sel == null || sel.isDeleted()) { System.out.println("해당 게시글이 존재하지 않습니다."); continue; }
-                if (me == null) { System.out.println("로그인이 필요합니다."); continue; }
-                new TradeService(store).requestTrade(me, sel);
-            } else {
-                System.out.println("알 수 없는 명령입니다.");
+                case GOTO -> currentPage = readGoto(page.totalPages);
+                case VIEW -> handleViewDetail();
+                case REQUEST -> handleRequest(me);
+                default -> System.out.println("알 수 없는 명령입니다.");
             }
         }
     }
+
+    private enum Command { NEXT, PREV, SORT, GOTO, VIEW, REQUEST, EXIT, UNKNOWN }
+
+    private static final class Page {
+        final List<Post> items;
+        final int currentPage;
+        final int totalPages;
+        final int total;
+        Page(List<Post> items, int currentPage, int totalPages, int total) {
+            this.items = items;
+            this.currentPage = currentPage;
+            this.totalPages = totalPages;
+            this.total = total;
+        }
+    }
+
+    private List<Post> filteredPosts(User me, String keyword) {
+        final String kw = keyword.toLowerCase();
+        return store.posts().values().stream()
+                .filter(p -> !p.isDeleted() && p.getStatus() != PostStatus.COMPLETED)
+                .filter(p -> kw.isEmpty()
+                        || p.getTitle().toLowerCase().contains(kw)
+                        || p.getDescription().toLowerCase().contains(kw))
+                .filter(p -> me == null || !p.getSellerId().equals(me.getId())) // 내 글 제외
+                .collect(Collectors.toList());
+    }
+
+    private Page paginate(List<Post> list, int currentPage) {
+        int total = list.size();
+        int totalPages = Math.max(1, (total + 10 - 1) / 10);
+        int safePage = Math.clamp(currentPage, 1, totalPages);
+        int from = (safePage - 1) * 10;
+        int to = Math.min(from + 10, total);
+        return new Page(list.subList(from, to), safePage, totalPages, total);
+    }
+
+    private void renderPageHeader(int total, int page, int totalPages, int sortOpt) {
+        System.out.println("======================");
+        System.out.println("총 " + total + "건 | 페이지 " + page + "/" + totalPages + " | 정렬: " + sortLabel(sortOpt));
+    }
+
+    private void renderPosts(List<Post> posts) {
+        for (Post p : posts) {
+            User seller = store.users().get(p.getSellerId());
+            String sellerNick = seller != null ? seller.getNickname() : p.getSellerId();
+            String rank = seller != null ? getUserRank(seller) : "";
+            System.out.println(String.format("[%d] %s | %s | %s원 | %s | %s%s | %s",
+                    p.getPostId(),
+                    p.getTitle(),
+                    p.getCategory(),
+                    PriceUtil.format(p.getPrice()),
+                    p.getStatus(),
+                    sellerNick,
+                    rank.isEmpty() ? "" : " (" + rank + ")",
+                    p.getCreatedAt()));
+        }
+        System.out.println("----------------------");
+        System.out.println("명령: n=다음, p=이전, s=정렬변경, g=페이지이동, v=상세조회, r=거래요청, 0=뒤로");
+    }
+
+    private Command readCommand() {
+        String raw = Optional.ofNullable(InputUtil.readLine()).orElse("").trim().toLowerCase();
+        return switch (raw) {
+            case "0" -> Command.EXIT;
+            case "n" -> Command.NEXT;
+            case "p" -> Command.PREV;
+            case "s" -> Command.SORT;
+            case "g" -> Command.GOTO;
+            case "v" -> Command.VIEW;
+            case "r" -> Command.REQUEST;
+            default -> Command.UNKNOWN;
+        };
+    }
+
+    private int nextPage(int current, int totalPages) {
+        if (current < totalPages) return current + 1;
+        System.out.println("마지막 페이지입니다.");
+        return current;
+    }
+
+    private int prevPage(int current) {
+        if (current > 1) return current - 1;
+        System.out.println("첫 페이지입니다.");
+        return current;
+    }
+
+    private int readSortOption() {
+        System.out.println("정렬 방식을 선택하세요: 1.가격낮은순 2.가격높은순 3.최신순 4.카테고리");
+        return InputUtil.readIntInRange("선택: ", 1, 4);
+    }
+
+    private int readGoto(int totalPages) {
+        return InputUtil.readIntInRange("이동할 페이지(1-" + totalPages + "): ", 1, totalPages);
+    }
+
+    private void handleViewDetail() {
+        int pid = InputUtil.readInt("상세조회할 게시글 번호(0=취소): ");
+        if (pid == 0) return;
+        Post sel = store.posts().get(pid);
+        if (sel == null || sel.isDeleted()) {
+            System.out.println("해당 게시글이 존재하지 않습니다.");
+            return;
+        }
+        printDetail(sel);
+    }
+
+    private void handleRequest(User me) {
+        int pid = InputUtil.readInt("거래요청할 게시글 번호(0=취소): ");
+        if (pid == 0) return;
+
+        Post sel = store.posts().get(pid);
+        if (sel == null || sel.isDeleted()) {
+            System.out.println("해당 게시글이 존재하지 않습니다.");
+            return;
+        }
+        if (me == null) {
+            System.out.println("로그인이 필요합니다.");
+            return;
+        }
+        new TradeService(store).requestTrade(me, sel);
+    }
+    // ====================== /리팩터링된 검색/조회 ======================
 
     // 내 게시글 관리(수정/삭제)
     public void manageMyPosts(User me) {
         List<Post> mine = store.posts().values().stream()
                 .filter(p -> !p.isDeleted() && p.getSellerId().equals(me.getId()))
                 .sorted(Comparator.comparing(Post::getPostId))
-                .collect(Collectors.toList());
+                .toList();
         if (mine.isEmpty()) {
             System.out.println("내 게시글이 없습니다.");
             return;
         }
         System.out.println("====== 내 게시글 ======");
-        mine.forEach(p -> System.out.println(p));
+        mine.forEach(System.out::println);
 
         int pid = InputUtil.readInt("수정/삭제할 게시글 번호(0=뒤로): ");
         if (pid == 0) return;
@@ -264,12 +335,12 @@ public class PostService {
     }
 
     private ConditionLevel mapCondition(String s) {
-        switch (s) {
-            case "상": return ConditionLevel.HIGH;
-            case "중": return ConditionLevel.MEDIUM;
-            case "하": return ConditionLevel.LOW;
-            default: return null;
-        }
+        return switch (s) {
+            case "상" -> ConditionLevel.HIGH;
+            case "중" -> ConditionLevel.MEDIUM;
+            case "하" -> ConditionLevel.LOW;
+            default -> null;
+        };
     }
 
     // 등급 산정: 작성 게시물 수 기준
@@ -284,12 +355,12 @@ public class PostService {
     }
 
     private String sortLabel(int opt) {
-        switch (opt) {
-            case 1: return "가격낮은순";
-            case 2: return "가격높은순";
-            case 3: return "최신순";
-            case 4: return "카테고리";
-            default: return "기본";
-        }
+        return switch (opt) {
+            case 1 -> "가격낮은순";
+            case 2 -> "가격높은순";
+            case 3 -> "최신순";
+            case 4 -> "카테고리";
+            default -> "기본";
+        };
     }
 }

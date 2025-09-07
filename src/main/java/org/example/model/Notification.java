@@ -6,14 +6,12 @@ import java.time.LocalDateTime;
 public class Notification implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int notificationId;
-    private String userId; // 수신자
-    private NotificationType type;
-    private String message;
+    private final int notificationId;
+    private final String userId; // 수신자
+    private final NotificationType type;
+    private final String message;
     private boolean read;
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    public Notification() {}
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     public Notification(int notificationId, String userId, NotificationType type, String message) {
         this.notificationId = notificationId;

@@ -3,10 +3,17 @@ package org.example;
 import org.example.datastore.DataStore;
 import org.example.model.Role;
 import org.example.model.User;
-import org.example.service.*;
+import org.example.service.AdminService;
+import org.example.service.AuthService;
+import org.example.service.NotificationService;
+import org.example.service.PostService;
+import org.example.service.TradeService;
 import org.example.util.InputUtil;
 
 public class Main {
+    private static final String MSG_EXIT = "프로그램을 종료합니다. 이용해 주셔서 감사합니다!";
+    private static final String LINE_EQ = "====================================";
+
     private final DataStore store = new DataStore();
     private final AuthService auth = new AuthService(store);
     private final PostService postService = new PostService(store);
@@ -14,15 +21,13 @@ public class Main {
     private final TradeService tradeService = new TradeService(store);
     private final NotificationService notificationService = new NotificationService(store);
 
-    // Scanner는 InputUtil에서 일원화하여 사용하므로 여기서는 보유하지 않습니다.
-
     public static void main(String[] args) {
         new Main().run();
     }
 
     private void run() {
-        store.loadAll();              // 직렬화 데이터 로드
-        auth.ensureDefaultAdmin();    // 기본 관리자 계정 확보
+        store.loadAll();           // 직렬화 데이터 로드
+        auth.ensureDefaultAdmin(); // 기본 관리자 계정 확보
 
         while (true) {
             if (auth.getCurrentUser() == null) {
@@ -34,8 +39,12 @@ public class Main {
                     case 3: auth.login(true);  break; // 관리자 로그인
                     case 0:
                         store.saveAll();
-                        System.out.println("프로그램을 종료합니다. 이용해 주셔서 감사합니다!");
-                        return;
+                        System.out.println(MSG_EXIT);
+                        return; // main while-loop 종료
+                    default:
+                        printWelcome();
+                        System.out.println("잘못된 선택입니다.");
+                        break;
                 }
             } else if (auth.getCurrentUser().getRole() == Role.ADMIN) {
                 showAdminMenu();
@@ -46,13 +55,13 @@ public class Main {
     }
 
     private void printWelcome() {
-        System.out.println("====================================");
+        System.out.println(LINE_EQ);
         System.out.println("중고거래 시스템에 오신 것을 환영합니다!");
         System.out.println("1. 회원 가입");
         System.out.println("2. 로그인");
         System.out.println("3. 관리자 로그인");
         System.out.println("0. 종료");
-        System.out.println("====================================");
+        System.out.println(LINE_EQ);
     }
 
     // 일반 사용자 메뉴
@@ -79,8 +88,12 @@ public class Main {
             case 6: auth.logout(); break;
             case 0:
                 store.saveAll();
-                System.out.println("프로그램을 종료합니다. 이용해 주셔서 감사합니다!");
+                System.out.println(MSG_EXIT);
                 System.exit(0);
+                break;
+            default:
+                System.out.println("잘못된 선택입니다.");
+                break;
         }
     }
 
@@ -99,8 +112,12 @@ public class Main {
             case 3: auth.logout(); break;
             case 0:
                 store.saveAll();
-                System.out.println("프로그램을 종료합니다. 이용해 주셔서 감사합니다!");
+                System.out.println(MSG_EXIT);
                 System.exit(0);
+                break;
+            default:
+                System.out.println("잘못된 선택입니다.");
+                break;
         }
     }
 }

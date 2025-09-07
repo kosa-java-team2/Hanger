@@ -6,18 +6,16 @@ import java.time.LocalDateTime;
 public class Trade implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int tradeId;
-    private int postId;
-    private String buyerId;
-    private String sellerId;
+    private final int tradeId;
+    private final int postId;
+    private final String buyerId;
+    private final String sellerId;
     private TradeStatus status = TradeStatus.REQUESTED;
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private final LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     private Boolean buyerRatedGood;   // null=미평가, true=good, false=bad
     private Boolean sellerRatedGood;  // 선택적 사용
-
-    public Trade() {}
 
     public Trade(int tradeId, int postId, String buyerId, String sellerId) {
         this.tradeId = tradeId;

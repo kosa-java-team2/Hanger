@@ -8,36 +8,62 @@ import java.time.LocalDateTime;
 public class Post implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int postId;
+    private final int postId;
     private String title;
     private String category;
     private int price;
     private PostStatus status = PostStatus.ON_SALE;
-    private String sellerId;
+    private final String sellerId;
     private String location;
     private ConditionLevel condition;
     private String description;
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private boolean isDeleted = false;
 
-    public Post() {}
-
-    public Post(int postId, String title, String category, int price,
-                String sellerId, String location, ConditionLevel condition, String description) {
-        this.postId = postId;
-        this.title = title;
-        this.category = category;
-        this.price = price;
-        this.sellerId = sellerId;
-        this.location = location;
-        this.condition = condition;
-        this.description = description;
+    // 🔒 private 생성자: Builder만 사용 가능
+    private Post(Builder builder) {
+        this.postId = builder.postId;
+        this.title = builder.title;
+        this.category = builder.category;
+        this.price = builder.price;
+        this.sellerId = builder.sellerId;
+        this.location = builder.location;
+        this.condition = builder.condition;
+        this.description = builder.description;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void touch() { this.updatedAt = LocalDateTime.now(); }
 
-    // getters/setters
+    // ====== Builder 클래스 ======
+    public static class Builder {
+        private final int postId;
+        private final String sellerId;
+        private String title;
+        private String category;
+        private int price;
+        private String location;
+        private ConditionLevel condition;
+        private String description;
+
+        public Builder(int postId, String sellerId) {
+            this.postId = postId;
+            this.sellerId = sellerId;
+        }
+
+        public Builder title(String title) { this.title = title; return this; }
+        public Builder category(String category) { this.category = category; return this; }
+        public Builder price(int price) { this.price = price; return this; }
+        public Builder location(String location) { this.location = location; return this; }
+        public Builder condition(ConditionLevel condition) { this.condition = condition; return this; }
+        public Builder description(String description) { this.description = description; return this; }
+
+        public Post build() { return new Post(this); }
+    }
+
+    // ====== Getters/Setters ======
     public int getPostId() { return postId; }
     public String getTitle() { return title; }
     public String getCategory() { return category; }
@@ -63,6 +89,6 @@ public class Post implements Serializable {
     @Override
     public String toString() {
         return String.format("[%d] %s | %s | %s원 | %s | %s",
-            postId, title, category, PriceUtil.format(price), status, sellerId);
+                postId, title, category, PriceUtil.format(price), status, sellerId);
     }
 }

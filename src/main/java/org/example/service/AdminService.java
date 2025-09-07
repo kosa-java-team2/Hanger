@@ -21,12 +21,12 @@ public class AdminService {
     public void manageUsers() {
         List<User> list = store.users().values().stream()
                 .sorted(Comparator.comparing(User::getId))
-                .collect(Collectors.toList());
+                .toList();
         System.out.println("====== 사용자 목록 ======");
         for (User u : list) {
-            System.out.println(String.format("아이디: %s | 닉네임: %s | 나이: %d | 성별: %s | 권한: %s | 생성일: %s | 신뢰도: G%d/B%d",
+            System.out.printf("아이디: %s | 닉네임: %s | 나이: %d | 성별: %s | 권한: %s | 생성일: %s | 신뢰도: G%d/B%d%n",
                     u.getId(), u.getNickname(), u.getAge(), u.getGender(), u.getRole(),
-                    u.getCreatedAt(), u.getTrustGood(), u.getTrustBad()));
+                    u.getCreatedAt(), u.getTrustGood(), u.getTrustBad());
         }
         System.out.println("========================");
         String id = InputUtil.readNonEmptyLine("삭제할 사용자 ID(0=취소): ");
@@ -56,7 +56,7 @@ public class AdminService {
         List<Post> list = store.posts().values().stream()
                 .filter(p -> !p.isDeleted())
                 .sorted(Comparator.comparing(Post::getPostId))
-                .collect(Collectors.toList());
+                .toList();
         System.out.println("====== 게시글 목록 ======");
         list.forEach(System.out::println);
         System.out.println("========================");

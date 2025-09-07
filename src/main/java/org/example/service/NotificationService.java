@@ -21,7 +21,7 @@ public class NotificationService {
         List<Notification> list = store.notifications().values().stream()
                 .filter(n -> n.getUserId().equals(me.getId()))
                 .sorted((a,b) -> Integer.compare(a.getNotificationId(), b.getNotificationId()))
-                .collect(Collectors.toList());
+                .toList();
         if (list.isEmpty()) {
             System.out.println("알림이 없습니다.");
             return;

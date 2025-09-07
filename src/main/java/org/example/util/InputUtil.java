@@ -2,8 +2,13 @@ package org.example.util;
 
 import java.util.Scanner;
 
-public class InputUtil {
+public final class InputUtil {   // final: 상속 방지
     private static final Scanner SC = new Scanner(System.in);
+
+    // 🔒 인스턴스화를 막는 private 생성자
+    private InputUtil() {
+        throw new UnsupportedOperationException("Utility class - cannot be instantiated");
+    }
 
     public static String readLine() {
         return SC.nextLine();

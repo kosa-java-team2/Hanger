@@ -11,6 +11,14 @@ import java.time.LocalDate;
 import java.util.Map;
 
 public class AuthService {
+    private static final String DEFAULT_ADMIN_ID = "admin";
+    private static final String DEFAULT_ADMIN_PASSWORD = "admin123!";
+    private static final String DEFAULT_ADMIN_NICK = "관리자";
+    private static final String DEFAULT_ADMIN_NAME = "관리자";
+    private static final String DEFAULT_ADMIN_RRN = "000000-3000000";
+    private static final int    DEFAULT_ADMIN_AGE = 30;
+    private static final String DEFAULT_ADMIN_GENDER = "M";
+
     private final DataStore store;
     private User currentUser;
 
@@ -23,15 +31,27 @@ public class AuthService {
     // 기본 관리자 보장 (최초 실행 대비)
     public void ensureDefaultAdmin() {
         Map<String, User> users = store.users();
-        if (!users.containsKey("admin")) {
+        if (!users.containsKey(DEFAULT_ADMIN_ID)) {
             String salt = PasswordUtil.newSalt();
-            String hash = PasswordUtil.hash("admin123!", salt);
-            // 관리자 주민번호/나이/성별은 더미
-            User admin = new User("admin", "관리자", "관리자", "000000-3000000",
-                    30, "M", salt, hash, Role.ADMIN);
-            users.put("admin", admin);
+            String hash = PasswordUtil.hash(DEFAULT_ADMIN_PASSWORD, salt);
+
+            User admin = new User.Builder(
+                    DEFAULT_ADMIN_ID,
+                    DEFAULT_ADMIN_NICK,
+                    DEFAULT_ADMIN_NAME,
+                    DEFAULT_ADMIN_RRN
+            )
+                    .age(DEFAULT_ADMIN_AGE)
+                    .gender(DEFAULT_ADMIN_GENDER)
+                    .salt(salt)
+                    .passwordHash(hash)
+                    .role(Role.ADMIN)
+                    .build();
+
+            users.put(DEFAULT_ADMIN_ID, admin);
             store.saveAll();
-            System.out.println("기본 관리자 계정 생성: admin / admin123!");
+            System.out.println("기본 관리자 계정 생성: " +
+                    DEFAULT_ADMIN_ID + " / " + DEFAULT_ADMIN_PASSWORD);
         }
     }
 
@@ -54,24 +74,6 @@ public class AuthService {
             break;
         }
 
-//        String nickname;
-//        while (true) {
-//            nickname = InputUtil.readNonEmptyLine("닉네임(공백 불가, 2~20자): ");
-//            if (!RegexUtil.isValidNickname(nickname)) {
-//                System.out.println("형식 오류: 공백 없이 2~20자여야 합니다.");
-//                continue;
-//            }
-//            // 닉네임 중복
-//            boolean dup = store.users().values().stream().anyMatch(u -> u.getNickname().equals(nickname));
-//            if (dup) {
-//                System.out.println("이미 사용중인 닉네임입니다.");
-//                continue;
-//            }
-//            break;
-//        }
-        
-        
-        
         String nickname;
         while (true) {
             nickname = InputUtil.readNonEmptyLine("닉네임(공백 불가, 2~20자): ");
@@ -93,7 +95,6 @@ public class AuthService {
             break;
         }
 
-        ///////////////////////
         String name = InputUtil.readNonEmptyLine("이름: ");
 
         String rrn;
@@ -119,7 +120,14 @@ public class AuthService {
         String salt = PasswordUtil.newSalt();
         String hash = PasswordUtil.hash(pw, salt);
 
-        User u = new User(id, nickname, name, rrn, age, gender, salt, hash, Role.MEMBER);
+        User u = new User.Builder(id, nickname, name, rrn)
+                .age(age)
+                .gender(gender)
+                .salt(salt)
+                .passwordHash(hash)
+                .role(Role.MEMBER)
+                .build();
+
         store.users().put(id, u);
         store.rrnSet().add(rrn);
         store.saveAll();
@@ -163,8 +171,6 @@ public class AuthService {
     // 주민번호에서 나이 계산(국제식, 단순화)
     private int calcAgeFromRRN(String rrn) {
         String yy = rrn.substring(0, 2);
-        String mm = rrn.substring(2, 4);
-        String dd = rrn.substring(4, 6);
         char g = rrn.charAt(7);
         int year = Integer.parseInt(yy);
         int century = (g == '1' || g == '2') ? 1900 : 2000;

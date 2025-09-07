@@ -6,13 +6,11 @@ import java.time.LocalDateTime;
 public class Report implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int reportId;
-    private String reporterId;
-    private String targetUserId; // 대상 사용자 (또는 필요 시 postId 확장)
-    private String reason;
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    public Report() {}
+    private final int reportId;
+    private final String reporterId;
+    private final String targetUserId; // 대상 사용자 (또는 필요 시 postId 확장)
+    private final String reason;
+    private final LocalDateTime createdAt = LocalDateTime.now();
 
     public Report(int reportId, String reporterId, String targetUserId, String reason) {
         this.reportId = reportId;
