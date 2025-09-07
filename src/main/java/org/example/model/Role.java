@@ -4,11 +4,11 @@ package org.example.model;
  * Role
  * -------------------
  * 사용자 권한(역할)을 표현하는 열거형.
- *
+ * <p>
  * 사용처:
  * - {@link org.example.service.AuthService} : 관리자 전용 로그인(adminOnly) 검증
  * - {@link org.example.service.AdminService}: 관리자만 수행 가능한 사용자/게시글 관리
- *
+ * <p>
  * 설계/호환성 노트:
  * - 직렬화/영속화(스냅샷)와 연동되므로 **상수명 변경/삭제 금지**.
  *   권한이 늘면 새 상수를 추가하는 방식으로 확장하세요(예: MODERATOR).

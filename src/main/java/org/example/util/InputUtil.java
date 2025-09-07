@@ -6,13 +6,13 @@ import java.util.Scanner;
  * InputUtil
  * -------------------
  * 콘솔 입력을 다루는 유틸리티 클래스.
- *
+ * <p>
  * 특징/설계 노트:
  * - 클래스는 유틸리티 성격이므로 final 이며, 인스턴스화를 막기 위해 private 생성자를 가진다.
  * - 단일 Scanner 인스턴스(SC)를 사용한다. (System.in은 전역 표준 입력이므로 Scanner를 여러 번
  *   생성/close하는 것은 권장되지 않음. 이 클래스에서는 SC를 close하지 않는다.)
  * - 모든 입력은 기본적으로 개행(Enter) 기반이며, 공백/형식 검증 루프를 통해 올바른 값이 들어올 때까지 요청한다.
- *
+ * <p>
  * 주의:
  * - readPasswordTwice는 콘솔에서 입력이 그대로 echo(표시)된다.
  *   운영 환경에서는 java.io.Console#readPassword 같은 no-echo 입력으로 대체하는 것을 권장한다.
@@ -106,7 +106,7 @@ public final class InputUtil {   // final: 상속 방지
      * - "1000" 또는 "1,000" 형식 모두 허용.
      * - 유효성은 RegexUtil.isValidPriceWithCommaOrPlain 로 검사.
      * - 유효하지 않거나 파싱 실패 시 null 반환(호출부에서 오류 메시지 처리).
-     *
+     * <p>
      * 주의:
      * - 금액 범위가 int를 넘어설 수 있다면 long/BigDecimal 사용을 고려한다.
      *
@@ -129,11 +129,11 @@ public final class InputUtil {   // final: 상속 방지
 
     /**
      * 비밀번호를 2회 입력받아 일치할 때까지 반복한다.
-     *
+     * <p>
      * 보안 노트:
      * - 이 메서드는 콘솔에 입력이 그대로 표시된다(에코 on). 운영 환경에서는 no-echo 입력(예: Console#readPassword)을 권장.
      * - 비밀번호 유효성(길이/문자 조합 등) 검사는 별도 정책에 따라 호출부나 Validator에서 수행할 것.
-     *
+     * <p>
      * @param p1 1차 입력 프롬프트
      * @param p2 2차 입력 프롬프트
      * @return 최종 일치한 비밀번호 원문(호출부에서 즉시 해시/폐기 권장)

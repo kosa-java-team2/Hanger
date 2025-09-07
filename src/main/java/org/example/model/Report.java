@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * Report 클래스
  * -------------------
  * 시스템에서 발생하는 신고(Report) 정보를 표현하는 모델 클래스.
- *
+ * <p>
  * 특징:
  * - 직렬화 가능 (DataStore 저장/로드 지원)
  * - 신고 ID, 신고자 ID, 대상 사용자 ID, 신고 사유, 생성일시를 보관

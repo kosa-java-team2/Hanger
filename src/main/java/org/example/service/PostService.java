@@ -10,18 +10,19 @@ import org.example.util.InputUtil;
 import org.example.util.PriceUtil;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static java.lang.Math.clamp;
 
 /**
  * PostService
  * -------------------
  * 게시글(Post) 등록/검색/조회/수정/삭제 등 게시글 전반 비즈니스 로직을 담당하는 서비스 레이어.
- *
+ * <p>
  * 주요 기능:
  *  - 게시물 등록(createPost)
  *  - 검색 & 페이징 & 정렬 & 상세보기 & 거래요청(searchAndView)
  *  - 내 게시글 관리(수정/삭제)(manageMyPosts)
- *
+ * <p>
  * 설계 노트:
  *  - 영속 계층(DataStore)을 주입받아 사용한다.
  *  - 콘솔 인터랙션은 InputUtil을 사용한다.
@@ -55,7 +56,7 @@ public class PostService {
      *  3) 상태(상/중/하) → ConditionLevel 매핑
      *  4) postId 시퀀스 발급 → Post.Builder로 객체 생성
      *  5) store.posts()에 저장 후 saveAll()
-     *
+     * <p>
      * 주의:
      *  - 가격 입력은 정수로 통일하며, 입력 유틸이 "1,000" 형식도 정수로 파싱.
      *  - 음수 가격 방지.
@@ -100,7 +101,7 @@ public class PostService {
 
     /**
      * 검색 & 페이징 & 정렬 & 상세조회 & 거래요청까지 하나의 루프에서 처리하는 UI 흐름.
-     *
+     * <p>
      * 기본 흐름:
      *  1) 검색어 입력(빈칸=전체) → filteredPosts()로 필터링(삭제/완료 제외, 내 글 제외)
      *  2) 기본 정렬(최신순=옵션 3) 적용
@@ -118,21 +119,20 @@ public class PostService {
         System.out.print("검색어(빈칸=전체): ");
         final String keyword = Optional.ofNullable(InputUtil.readLine()).orElse("").trim();
 
-        // 검색 필터링: 삭제/완료 제외, 키워드 매칭, (로그인 시) 내 글 제외
-        List<Post> base = filteredPosts(me, keyword);
+        List<Post> base = new ArrayList<>(filteredPosts(me, keyword));
         if (base.isEmpty()) {
             System.out.println("검색 결과 없음");
             return;
         }
 
-        int sortOpt = 3; // 기본: 최신순 (ComparatorFactory에서 해석)
+        int sortOpt = 3; // 기본: 최신순
         base.sort(ComparatorFactory.of(sortOpt));
 
-        final int pageSize = 10; // 현재 구현은 고정 10건 페이지네이션
+        final int pageSize = 10;
         int currentPage = 1;
 
         while (true) {
-            Page page = paginate(base, currentPage);
+            Page page = paginate(base, currentPage, pageSize); // ✅ pageSize 전달
             renderPageHeader(page.total, page.currentPage, page.totalPages, sortOpt);
             renderPosts(page.items);
 
@@ -187,22 +187,23 @@ public class PostService {
                         || p.getTitle().toLowerCase().contains(kw)
                         || p.getDescription().toLowerCase().contains(kw))
                 .filter(p -> me == null || !p.getSellerId().equals(me.getId())) // 내 글 제외
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
      * 페이지 계산(고정 페이지 크기=10).
      *  - 범위를 벗어난 페이지 요청은 안전하게 보정.
-     *
+     * <p>
      * 주의:
      *  - Math.clamp는 Java 21+에 존재합니다. 더 낮은 버전 사용 시 직접 보정 코드를 사용하세요.
      */
-    private Page paginate(List<Post> list, int currentPage) {
+// 기존: private Page paginate(List<Post> list, int currentPage)
+    private Page paginate(List<Post> list, int currentPage, int pageSize) {
         int total = list.size();
-        int totalPages = Math.max(1, (total + 10 - 1) / 10);
-        int safePage = Math.clamp(currentPage, 1, totalPages); // Java 21 미만이면 수동 보정 필요
-        int from = (safePage - 1) * 10;
-        int to = Math.min(from + 10, total);
+        int totalPages = Math.max(1, (total + pageSize - 1) / pageSize);
+        int safePage = clamp(currentPage, 1, totalPages);
+        int from = (safePage - 1) * pageSize;
+        int to = Math.min(from + pageSize, total);
         return new Page(list.subList(from, to), safePage, totalPages, total);
     }
 
@@ -222,7 +223,7 @@ public class PostService {
             User seller = store.users().get(p.getSellerId());
             String sellerNick = seller != null ? seller.getNickname() : p.getSellerId();
             String rank = seller != null ? getUserRank(seller) : "";
-            System.out.println(String.format("[%d] %s | %s | %s원 | %s | %s%s | %s",
+            System.out.printf("[%d] %s | %s | %s원 | %s | %s%s | %s%n",
                     p.getPostId(),
                     p.getTitle(),
                     p.getCategory(),
@@ -230,7 +231,7 @@ public class PostService {
                     p.getStatus(),
                     sellerNick,
                     rank.isEmpty() ? "" : " (" + rank + ")",
-                    p.getCreatedAt()));
+                    p.getCreatedAt());
         }
         System.out.println("----------------------");
         System.out.println("명령: n=다음, p=이전, s=정렬변경, g=페이지이동, v=상세조회, r=거래요청, 0=뒤로");
@@ -398,6 +399,9 @@ public class PostService {
                 else if (s == 2) p.setStatus(PostStatus.IN_PROGRESS);
                 else p.setStatus(PostStatus.COMPLETED);
                 break;
+            default:
+                System.out.println("취소");
+                return;
         }
         store.saveAll();
         System.out.println("수정 완료");

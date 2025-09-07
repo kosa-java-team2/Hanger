@@ -11,11 +11,11 @@ import java.util.List;
  * NotificationService
  * -------------------
  * 사용자 알림(Notification) 조회 및 읽음 처리 기능을 제공하는 서비스.
- *
+ * <p>
  * 기능:
  *  - 현재 사용자(me)의 알림 목록 조회
  *  - 단일 알림 읽음 처리(사용자 소유 여부 확인 후)
- *
+ * <p>
  * 설계 노트:
  *  - 영속 계층(DataStore)의 notifications 맵을 조회하여 필터링/정렬한다.
  *  - 알림 목록이 비어 있으면 즉시 종료한다(불필요한 입력 방지).
@@ -35,14 +35,14 @@ public class NotificationService {
 
     /**
      * 내 알림함 표시 및 선택적 읽음 처리
-     *
+     * <p>
      * 흐름:
      *  1) store.notifications()에서 현재 사용자(me)의 알림만 필터링
      *  2) 알림 ID(notificationId) 오름차순으로 정렬
      *  3) 콘솔에 목록 출력 (Notification.toString() 사용)
      *  4) 읽음 처리할 알림 번호 입력(0=스킵)
      *  5) 선택한 알림이 존재하고, 소유자 검사(me.getId() 일치) 통과 시 읽음 처리(markRead) 및 저장
-     *
+     * <p>
      * 주의:
      *  - 읽음 처리 시 store.saveAll() 호출로 스냅샷 저장
      *  - 잘못된 선택(존재하지 않음/소유자 불일치) 시 안내 후 종료

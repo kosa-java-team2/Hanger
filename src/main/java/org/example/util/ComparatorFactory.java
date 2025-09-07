@@ -8,11 +8,11 @@ import java.util.Comparator;
  * ComparatorFactory
  * -------------------
  * 게시글(Post) 목록 정렬에 사용되는 Comparator를 옵션값에 따라 제공하는 유틸리티 클래스.
- *
+ * <p>
  * 사용 예:
  *   List<Post> list = ...;
  *   list.sort(ComparatorFactory.of(3)); // 최신순 정렬
- *
+ * <p>
  * 설계 노트:
  * - 인스턴스화가 불필요하므로 클래스는 final, 생성자는 private 으로 막는다.
  * - 옵션별 Comparator를 switch 로 명확하게 분기한다.
@@ -22,7 +22,7 @@ import java.util.Comparator;
  *     3: 생성일시 내림차순(최신순)
  *     4: 카테고리 사전순 → 동일 카테고리 내 postId 오름차순(안정적 출력용 tie-breaker)
  *   default: postId 오름차순(기본/안전한 정렬)
- *
+ * <p>
  * 주의:
  * - null 값 가능성이 있는 필드를 비교할 경우 Comparator.nullsFirst/Last 로 보강 가능.
  * - 최신순(옵션 3)의 경우 생성일이 같은 항목의 표시 순서를 안정화하려면

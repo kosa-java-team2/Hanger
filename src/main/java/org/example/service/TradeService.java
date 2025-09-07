@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
  * TradeService
  * -------------------
  * 거래(Trade) 수명주기 전반을 다루는 서비스 레이어.
- *
+ * <p>
  * 제공 기능:
  *  - requestTrade: 게시글 상세에서 거래 요청 생성 + 판매자 알림 발송
  *  - manageTrades: 내 거래 목록 조회 → 상태 변경 / 신뢰도 평가(신고 포함)
- *
+ * <p>
  * 설계 노트:
  *  - 모든 영속 데이터는 DataStore를 통해 접근/수정/저장한다.
  *  - 상태 변경/평가 후에는 store.saveAll()로 스냅샷 저장(지속성 보장).
@@ -41,7 +41,7 @@ public class TradeService {
      *  2) tradeId 발급 → Trade 생성 → trades 맵에 저장
      *  3) 판매자에게 거래 요청 알림(NotificationType.TRADE_REQUEST) 발송
      *  4) store.saveAll() 호출
-     *
+     *  <p>
      * @param buyer 거래를 요청하는 사용자(구매자)
      * @param post  대상 게시글
      */

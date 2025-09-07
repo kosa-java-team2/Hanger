@@ -4,15 +4,15 @@ package org.example.model;
  * NotificationType
  * -------------------
  * 알림(Notification)의 종류를 정의하는 열거형.
- *
+ * <p>
  * 발신(예시):
  * - TradeService.requestTrade(...)              → TRADE_REQUEST
  * - TradeService.notifyCounterpartyOnStatus(...)→ TRADE_ACCEPTED / TRADE_COMPLETED
  * - TradeService.maybeReportUser(...)           → REPORT_RECEIVED
- *
+ * <p>
  * 사용(예시):
  * - NotificationService.showMyNotifications(...) 에서 타입에 따라 메시지를 표시.
- *
+ * <p>
  * 호환성 노트:
  * - 본 프로젝트는 직렬화를 통해 {@link org.example.model.Notification} 이 저장됩니다.
  *   enum 상수명을 변경/삭제하면 이전에 저장된 데이터와 호환성이 깨질 수 있습니다.

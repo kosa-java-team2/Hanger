@@ -8,7 +8,6 @@ import org.example.datastore.DataStore;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * AdminService
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
  * 현재 제공 기능:
  *  - 사용자 목록 조회 및 삭제(관리자 계정은 삭제 불가)
  *  - 게시글 목록 조회 및 삭제(논리 삭제)
- *
+ * <p>
  * 설계 노트:
  * - 영속 계층(DataStore)을 주입받아 사용한다(생성자 주입).
  * - 출력/입력(콘솔 I/O)은 간단한 CLI용 유틸(InputUtil)을 사용한다.
@@ -39,7 +38,7 @@ public class AdminService {
 
     /**
      * 사용자 관리: 목록 조회 → 선택 삭제
-     *
+     * <p>
      * 흐름:
      *  1) 모든 사용자(users) 정렬(id 오름차순) 후 콘솔에 요약 정보 출력
      *  2) 삭제 대상 사용자 ID 입력받기(0 입력 시 취소)
@@ -104,7 +103,7 @@ public class AdminService {
 
     /**
      * 게시글 관리: 목록 조회(삭제되지 않은 글) → 선택 삭제(논리 삭제)
-     *
+     * <p>
      * 흐름:
      *  1) posts에서 isDeleted() == false 인 글만 필터링하여 postId 오름차순으로 출력
      *  2) 삭제 대상 게시글 번호 입력받기(0 입력 시 취소)

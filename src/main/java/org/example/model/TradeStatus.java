@@ -4,17 +4,17 @@ package org.example.model;
  * TradeStatus
  * -------------------
  * 개별 거래(Trade)의 수명주기 상태를 표현하는 열거형.
- *
+ * <p>
  * 대표 전이(예시):
  *   REQUESTED → ACCEPTED → IN_PROGRESS → COMPLETED
  *                         ↘─────────────┘
  *   (언제든 CANCELLED 로 종료 가능 — 정책에 따라 제한)
- *
+ * <p>
  * 사용처:
  * - {@link org.example.model.Trade} 엔티티의 상태 필드
  * - {@link org.example.service.TradeService} 상태 변경/검증 로직
  * - 알림 타입 매핑(예: COMPLETED → NotificationType.TRADE_COMPLETED 등)
- *
+ * <p>
  * 설계/호환성 노트:
  * - 직렬화/스냅샷과 연동되므로 **상수명 변경/삭제 금지**(기존 데이터 호환성 깨짐).
  * - **ordinal(순서) 의존 금지**: 정렬/우선순위는 명시적 Comparator 또는 점수 매핑 사용.

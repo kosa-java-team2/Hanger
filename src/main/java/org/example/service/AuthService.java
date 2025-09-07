@@ -19,7 +19,7 @@ import java.util.Map;
  *  - 회원가입(Signup)
  *  - 로그인(Login) / 로그아웃(Logout)
  *  - RRN(주민번호) 기반 성별/나이 산출(단순화)
- *
+ * <p>
  * 설계/보안 노트:
  * - 비밀번호는 salt + hash로 저장(평문 저장 금지).
  * - 회원가입 시 ID/닉네임/주민번호 형식 검사 및 중복 검사 수행.
@@ -101,37 +101,45 @@ public class AuthService {
         String id;
         while (true) {
             id = InputUtil.readNonEmptyLine("아이디(영문/숫자 4~16, 특수문자 불가): ");
+
+            boolean valid = true;
+
             if (!RegexUtil.isValidUserId(id)) {
                 System.out.println("형식 오류: 영문/숫자 4~16자만 허용됩니다.");
-                continue;
-            }
-            if (store.users().containsKey(id)) {
+                valid = false;
+            } else if (store.users().containsKey(id)) {
                 System.out.println("이미 사용중인 아이디입니다.");
-                continue;
+                valid = false;
             }
-            break;
+
+            if (valid) {
+                break;
+            }
         }
 
         // --- 닉네임 입력/검증 ---
         String nickname;
         while (true) {
             nickname = InputUtil.readNonEmptyLine("닉네임(공백 불가, 2~20자): ");
+
+            boolean ok = true;
+
             if (!RegexUtil.isValidNickname(nickname)) {
                 System.out.println("형식 오류: 공백 없이 2~20자여야 합니다.");
-                continue;
-            }
-            boolean dup = false;
-            for (User u : store.users().values()) {
-                if (nickname.equals(u.getNickname())) {
-                    dup = true;
-                    break;
+                ok = false;
+            } else {
+                String finalNickname = nickname;
+                boolean dup = store.users().values().stream()
+                        .anyMatch(u -> finalNickname.equals(u.getNickname()));
+                if (dup) {
+                    System.out.println("이미 사용중인 닉네임입니다.");
+                    ok = false;
                 }
             }
-            if (dup) {
-                System.out.println("이미 사용중인 닉네임입니다.");
-                continue;
+
+            if (ok) {
+                break; // ← 이 while 블록의 유일한 제어문
             }
-            break;
         }
 
         // --- 이름 입력 ---
@@ -141,15 +149,20 @@ public class AuthService {
         String rrn;
         while (true) {
             rrn = InputUtil.readNonEmptyLine("주민번호(예: 000000-0000000): ");
+
+            boolean ok = true;
+
             if (!RegexUtil.isValidRRN(rrn)) {
                 System.out.println("형식 오류: 6자리-7자리 형식이어야 합니다.");
-                continue;
-            }
-            if (store.rrnSet().contains(rrn)) {
+                ok = false;
+            } else if (store.rrnSet().contains(rrn)) {
                 System.out.println("기존 회원가입 이력이 있습니다.");
-                continue;
+                ok = false;
             }
-            break;
+
+            if (ok) {
+                break; // ← 이 while 블록의 유일한 제어문
+            }
         }
 
         // --- 비밀번호 입력/확인 ---
