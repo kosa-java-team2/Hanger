@@ -4,33 +4,69 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * User 클래스
+ * -------------------
+ * 시스템 내 회원(User)을 표현하는 도메인 모델 클래스.
+ *
+ * 특징:
+ * - 직렬화 가능 (DataStore 저장/로드 지원)
+ * - 고유 ID, 기본 정보(이름, 나이, 성별, 주민번호), 보안 정보(비밀번호 해시, salt) 보관
+ * - 역할(Role: MEMBER, ADMIN 등) 포함
+ * - 신뢰도 시스템(좋은 평가/나쁜 평가 횟수) 지원
+ * - Builder 패턴을 사용해 필수/선택 속성을 구분하여 객체 생성
+ */
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    // 기본 정보
-    private final String id;           // key
+    // ===================== 기본 정보 =====================
+    /** 사용자 고유 ID (Primary Key 역할) */
+    private final String id;
+
+    /** 닉네임 (변경 가능) */
     private String nickname;
+
+    /** 이름 (실명) */
     private final String name;
-    private final String rrn;          // 123456-1234567
+
+    /** 주민등록번호 (예: 123456-1234567) */
+    private final String rrn;
+
+    /** 나이 */
     private final int age;
-    private final String gender;       // "M"/"F"
+
+    /** 성별 ("M" 또는 "F") */
+    private final String gender;
+
+    /** 사용자 역할 (기본값: MEMBER) */
     private Role role;
 
-    // 보안
-    private final String salt;         // Base64
-    private final String passwordHash; // Base64
+    // ===================== 보안 정보 =====================
+    /** 비밀번호 해싱을 위한 salt (Base64 인코딩) */
+    private final String salt;
 
-    // 메타
+    /** 비밀번호 해시값 (Base64 인코딩) */
+    private final String passwordHash;
+
+    // ===================== 메타데이터 =====================
+    /** 가입일시 */
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    /** 마지막 수정일시 */
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    // 신뢰도
+    // ===================== 신뢰도 =====================
+    /** 좋은 평가 횟수 */
     private int trustGood;
+
+    /** 나쁜 평가 횟수 */
     private int trustBad;
 
-    // 🔧 프레임워크/직렬화를 위한 기본 생성자 (예: Java Serialization)
-
-    // 🔒 Builder 전용 생성자 (외부에서 직접 9개 인자 생성자 사용 금지)
+    // ===================== 생성자 =====================
+    /**
+     * Builder 전용 생성자
+     * 외부에서 직접 생성자 호출을 막고, 반드시 Builder를 통해 생성하도록 강제한다.
+     */
     private User(Builder b) {
         this.id = b.id;
         this.nickname = b.nickname;
@@ -40,18 +76,24 @@ public class User implements Serializable {
         this.gender = b.gender;
         this.salt = b.salt;
         this.passwordHash = b.passwordHash;
-        this.role = (b.role != null) ? b.role : Role.MEMBER;
+        this.role = (b.role != null) ? b.role : Role.MEMBER; // 기본 역할은 MEMBER
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
 
-    // ====== Builder ======
+    // ===================== Builder =====================
+    /**
+     * User 객체 생성을 위한 Builder 클래스
+     * - 필수: id, nickname, name, rrn
+     * - 선택: age, gender, salt, passwordHash, role
+     */
     public static class Builder {
         // 필수
         private final String id;
         private final String nickname;
         private final String name;
         private final String rrn;
+
         // 선택
         private int age;
         private String gender;
@@ -72,17 +114,21 @@ public class User implements Serializable {
         public Builder passwordHash(String passwordHash) { this.passwordHash = passwordHash; return this; }
         public Builder role(Role role) { this.role = role; return this; }
 
-        public User build() {
-            return new User(this);
-        }
+        /** 최종 User 객체 생성 */
+        public User build() { return new User(this); }
     }
 
-    // ====== 도메인 동작 ======
+    // ===================== 도메인 동작 =====================
+    /** updatedAt을 현재 시각으로 갱신 */
     public void touch() { this.updatedAt = LocalDateTime.now(); }
+
+    /** 신뢰도 좋은 평가 1 증가 */
     public void addTrustGood() { this.trustGood++; touch(); }
+
+    /** 신뢰도 나쁜 평가 1 증가 */
     public void addTrustBad() { this.trustBad++; touch(); }
 
-    // ====== Getters/Setters ======
+    // ===================== Getter/Setter =====================
     public String getId() { return id; }
     public String getNickname() { return nickname; }
     public String getName() { return name; }
@@ -100,6 +146,10 @@ public class User implements Serializable {
     public void setNickname(String nickname) { this.nickname = nickname; touch(); }
     public void setRole(Role role) { this.role = role; touch(); }
 
+    // ===================== equals & hashCode =====================
+    /**
+     * 두 User 객체는 id가 같으면 동일한 사용자로 간주한다.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -110,6 +160,11 @@ public class User implements Serializable {
     @Override
     public int hashCode() { return Objects.hash(id); }
 
+    // ===================== toString =====================
+    /**
+     * 사용자 정보를 사람이 읽기 쉬운 문자열로 반환
+     * (비밀번호 관련 정보는 포함하지 않는다)
+     */
     @Override
     public String toString() {
         return String.format(
