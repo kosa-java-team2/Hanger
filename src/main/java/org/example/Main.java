@@ -65,7 +65,7 @@ public class Main {
      *  - 로그인 상태 & MEMBER → 일반 사용자 메뉴
      */
     private void run() {
-        store.loadAll();           // 1) 직렬화 데이터 로드(없으면 무시)
+        store.loadFromDisk();           // 1) 직렬화 데이터 로드(없으면 무시)
         auth.ensureDefaultAdmin(); // 2) 기본 관리자 계정 확보(최초 실행 대비)
 
         // 메인 이벤트 루프
@@ -79,7 +79,7 @@ public class Main {
                     case 2: auth.login(false); break;      // 일반 로그인
                     case 3: auth.login(true);  break;      // 관리자 로그인
                     case 0: // 종료
-                        store.saveAll();                   // 현재 상태 스냅샷 저장
+                        store.saveToDisk();                   // 현재 상태 스냅샷 저장
                         System.out.println(MSG_EXIT);
                         return;                            // run() 종료 → main 종료
                     default:
@@ -143,7 +143,7 @@ public class Main {
             case 5: notificationService.showMyNotifications(me); break;
             case 6: auth.logout(); break;
             case 0:
-                store.saveAll();
+                store.saveToDisk();
                 System.out.println(MSG_EXIT);
                 System.exit(0); // 프로세스 종료(현재는 단일 스레드 CLI 기준)
                 break;
@@ -177,7 +177,7 @@ public class Main {
             case 2: adminService.managePosts(); break;
             case 3: auth.logout(); break;  // 로그인 세션만 종료
             case 0:
-                store.saveAll();
+                store.saveToDisk();
                 System.out.println(MSG_EXIT);
                 System.exit(0);
                 break;

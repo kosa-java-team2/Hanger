@@ -22,16 +22,16 @@ public class Notification implements Serializable {
     private final int notificationId;
 
     /** 알림을 수신하는 사용자 ID */
-    private final String userId;
+    private final String recipientUserId;
 
     /** 알림 유형 (예: 거래 알림, 신고 알림 등) */
-    private final NotificationType type;
+    private final NotificationType notificationType;
 
     /** 알림에 표시될 메시지 */
-    private final String message;
+    private final String notificationMessage;
 
     /** 사용자가 읽었는지 여부 (true=읽음, false=안 읽음) */
-    private boolean read;
+    private boolean isRead;
 
     /** 알림 생성 시각 (기본적으로 객체 생성 시점으로 고정) */
     private final LocalDateTime createdAt = LocalDateTime.now();
@@ -41,23 +41,23 @@ public class Notification implements Serializable {
      * Notification 객체 생성자
      *
      * @param notificationId 알림 ID
-     * @param userId         알림 수신자 ID
-     * @param type           알림 유형 (enum)
-     * @param message        알림 메시지 내용
+     * @param recipientUserId 알림 수신자 ID
+     * @param notificationType 알림 유형 (enum)
+     * @param notificationMessage 알림 메시지 내용
      */
-    public Notification(int notificationId, String userId, NotificationType type, String message) {
+    public Notification(int notificationId, String recipientUserId, NotificationType notificationType, String notificationMessage) {
         this.notificationId = notificationId;
-        this.userId = userId;
-        this.type = type;
-        this.message = message;
+        this.recipientUserId = recipientUserId;
+        this.notificationType = notificationType;
+        this.notificationMessage = notificationMessage;
     }
 
     // ===================== Getter 메서드 =====================
     public int getNotificationId() { return notificationId; }
-    public String getUserId() { return userId; }
-    public NotificationType getType() { return type; }
-    public String getMessage() { return message; }
-    public boolean isRead() { return read; }
+    public String getRecipientUserId() { return recipientUserId; }
+    public NotificationType getNotificationType() { return notificationType; }
+    public String getNotificationMessage() { return notificationMessage; }
+    public boolean isRead() { return isRead; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     // ===================== 상태 변경 메서드 =====================
@@ -65,7 +65,9 @@ public class Notification implements Serializable {
      * 알림을 '읽음' 상태로 변경한다.
      * (사용자가 알림을 확인했을 때 호출)
      */
-    public void markRead() { this.read = true; }
+    public void markAsRead() {
+        this.isRead = true;
+    }
 
     // ===================== toString =====================
     /**
@@ -74,6 +76,6 @@ public class Notification implements Serializable {
      */
     @Override
     public String toString() {
-        return String.format("[%d] %s | %s | %s", notificationId, createdAt, type, message);
+        return String.format("[%d] %s | %s | %s", notificationId, createdAt, notificationType, notificationMessage);
     }
 }

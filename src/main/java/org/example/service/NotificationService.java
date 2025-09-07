@@ -4,7 +4,9 @@ import org.example.datastore.DataStore;
 import org.example.model.Notification;
 import org.example.model.User;
 import org.example.util.InputUtil;
+import org.example.util.SortUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,36 +49,42 @@ public class NotificationService {
      *  - 읽음 처리 시 store.saveAll() 호출로 스냅샷 저장
      *  - 잘못된 선택(존재하지 않음/소유자 불일치) 시 안내 후 종료
      */
-    public void showMyNotifications(User me) {
+    public void showMyNotifications(User currentUser) {
         System.out.println("====== 알림함 ======");
 
-        // 1) 현재 사용자 알림만 필터링하고 2) notificationId 기준 오름차순 정렬
-        List<Notification> list = store.notifications().values().stream()
-                .filter(n -> n.getUserId().equals(me.getId())) // 내 알림만
-                .sorted((a, b) -> Integer.compare(a.getNotificationId(), b.getNotificationId())) // ID 오름차순
-                .toList();
+        // 1) 현재 사용자 알림만 수집
+        List<Notification> notificationList = new ArrayList<>();
+        for (Notification notification : store.notifications().values()) {
+            if (currentUser.getId().equals(notification.getRecipientUserId())) {
+                notificationList.add(notification);
+            }
+        }
 
-        // 비어있으면 즉시 종료
-        if (list.isEmpty()) {
+        // 2) 알림 ID 오름차순 정렬
+        SortUtil.sortNotificationsById(notificationList);
+
+        // 비어있으면 종료
+        if (notificationList.isEmpty()) {
             System.out.println("알림이 없습니다.");
             return;
         }
 
-        // 알림 출력 (Notification.toString() 형식: [id] createdAt | type | message)
-        for (Notification n : list) {
-            System.out.println(n);
+        // 3) 출력
+        for (Notification notification : notificationList) {
+            System.out.println(notification); // [id] createdAt | type | message
         }
 
         // 4) 읽음 처리 대상 입력(0=스킵)
         System.out.println("읽음 처리할 알림 번호(0=스킵): ");
-        int nid = InputUtil.readInt("선택: ");
-        if (nid == 0) return;
+        int selectedNotificationId = InputUtil.readInt("선택: ");
+        if (selectedNotificationId == 0) return;
 
         // 5) 대상 알림 조회 및 소유자 검증 후 읽음 처리
-        Notification n = store.notifications().get(nid);
-        if (n != null && me.getId().equals(n.getUserId())) {
-            n.markRead();
-            store.saveAll();
+        Notification selectedNotification = store.notifications().get(selectedNotificationId);
+        if (selectedNotification != null
+                && currentUser.getId().equals(selectedNotification.getRecipientUserId())) {
+            selectedNotification.markAsRead();
+            store.saveToDisk();
             System.out.println("읽음 처리되었습니다.");
         } else {
             System.out.println("잘못된 선택입니다.");

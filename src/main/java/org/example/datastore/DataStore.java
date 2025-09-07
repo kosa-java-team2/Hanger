@@ -80,14 +80,14 @@ public class DataStore {
      * - 파일이 없으면 아무 작업도 하지 않는다.
      * - Snapshot 객체를 역직렬화하여 현재 DataStore에 적용한다.
      */
-    public void loadAll() {
-        File f = new File(DATA_FILE);
-        if (!f.exists()) return; // 첫 실행 등 저장 파일이 없을 때
+    public void loadFromDisk() {
+        File dataFile = new File(DATA_FILE);
+        if (!dataFile.exists()) return; // 첫 실행 등 저장 파일이 없을 때
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(f))) {
-            Snapshot s = readSnapshot(ois);       // Snapshot 객체 읽기
-            applySnapshotOrDefaults(s);           // Snapshot이 없으면 기본값으로 초기화
-            logLoadSummary();                     // 요약 로그 출력
+        try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(dataFile))) {
+            Snapshot snapshot = readSnapshotFromStream(input);  // Snapshot 객체 읽기
+            applySnapshotOrInitializeDefaults(snapshot);        // Snapshot이 없으면 기본값으로 초기화
+            printLoadSummary();                                 // 요약 로그 출력
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("데이터 로드 실패: " + e.getMessage());
         }
@@ -97,10 +97,10 @@ public class DataStore {
     /**
      * 현재 메모리에 적재된 데이터를 Snapshot 형태로 직렬화하여 store.dat 파일에 저장한다.
      */
-    public void saveAll() {
-        Snapshot s = toSnapshot(); // 현재 상태를 Snapshot 객체로 변환
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
-            oos.writeObject(s);
+    public void saveToDisk() {
+        Snapshot snapshot = createSnapshot(); // 현재 상태를 Snapshot 객체로 변환
+        try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
+            output.writeObject(snapshot);
             System.out.println("💾 데이터 저장 완료.");
         } catch (IOException e) {
             System.out.println("데이터 저장 실패: " + e.getMessage());
@@ -112,37 +112,37 @@ public class DataStore {
     /**
      * ObjectInputStream에서 Snapshot 객체를 안전하게 읽어오기
      */
-    private Snapshot readSnapshot(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        Object obj = ois.readObject();
-        return (obj instanceof Snapshot snapshot) ? snapshot : null;
+    private Snapshot readSnapshotFromStream(ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+        Object readObject = inputStream.readObject();
+        return (readObject instanceof Snapshot snapshot) ? snapshot : null;
     }
 
     /**
      * Snapshot이 null일 경우 기본값으로 초기화,
      * null이 아닌 경우는 Snapshot 데이터를 현재 객체에 적용
      */
-    private void applySnapshotOrDefaults(Snapshot s) {
-        if (s == null) {
-            resetToDefaults();
+    private void applySnapshotOrInitializeDefaults(Snapshot snapshot) {
+        if (snapshot == null) {
+            initializeDefaults();
             return;
         }
-        this.users = nvlMap(s.users);
-        this.posts = nvlMap(s.posts);
-        this.trades = nvlMap(s.trades);
-        this.notifications = nvlMap(s.notifications);
-        this.reports = nvlMap(s.reports);
-        this.rrnSet = nvlSet(s.rrnSet);
+        this.users = mapOrEmpty(snapshot.users);
+        this.posts = mapOrEmpty(snapshot.posts);
+        this.trades = mapOrEmpty(snapshot.trades);
+        this.notifications = mapOrEmpty(snapshot.notifications);
+        this.reports = mapOrEmpty(snapshot.reports);
+        this.rrnSet = setOrEmpty(snapshot.rrnSet);
 
-        this.postSeq = nzOrDefault(s.postSeq, DEFAULT_POST_SEQ);
-        this.tradeSeq = nzOrDefault(s.tradeSeq, DEFAULT_TRADE_SEQ);
-        this.notificationSeq = nzOrDefault(s.notificationSeq, DEFAULT_NOTIFICATION_SEQ);
-        this.reportSeq = nzOrDefault(s.reportSeq, DEFAULT_REPORT_SEQ);
+        this.postSeq = valueOrDefaultIfZero(snapshot.postSeq, DEFAULT_POST_SEQ);
+        this.tradeSeq = valueOrDefaultIfZero(snapshot.tradeSeq, DEFAULT_TRADE_SEQ);
+        this.notificationSeq = valueOrDefaultIfZero(snapshot.notificationSeq, DEFAULT_NOTIFICATION_SEQ);
+        this.reportSeq = valueOrDefaultIfZero(snapshot.reportSeq, DEFAULT_REPORT_SEQ);
     }
 
     /**
      * Snapshot이 없을 경우(즉, 최초 실행) 빈 Map/Set과 기본 시퀀스 값으로 초기화
      */
-    private void resetToDefaults() {
+    private void initializeDefaults() {
         this.users = new HashMap<>();
         this.posts = new HashMap<>();
         this.trades = new HashMap<>();
@@ -159,39 +159,39 @@ public class DataStore {
     /**
      * 로드 완료 후 데이터 건수를 간략하게 로그 출력
      */
-    private void logLoadSummary() {
+    private void printLoadSummary() {
         System.out.println("📦 데이터 로드 완료. (users=" + users.size() + ", posts=" + posts.size() + ")");
     }
 
     /**
      * 현재 DataStore 상태를 Snapshot 객체로 변환 (저장용)
      */
-    private Snapshot toSnapshot() {
-        Snapshot s = new Snapshot();
-        s.users = this.users;
-        s.posts = this.posts;
-        s.trades = this.trades;
-        s.notifications = this.notifications;
-        s.reports = this.reports;
-        s.rrnSet = this.rrnSet;
-        s.postSeq = this.postSeq;
-        s.tradeSeq = this.tradeSeq;
-        s.notificationSeq = this.notificationSeq;
-        s.reportSeq = this.reportSeq;
-        return s;
+    private Snapshot createSnapshot() {
+        Snapshot snapshot = new Snapshot();
+        snapshot.users = this.users;
+        snapshot.posts = this.posts;
+        snapshot.trades = this.trades;
+        snapshot.notifications = this.notifications;
+        snapshot.reports = this.reports;
+        snapshot.rrnSet = this.rrnSet;
+        snapshot.postSeq = this.postSeq;
+        snapshot.tradeSeq = this.tradeSeq;
+        snapshot.notificationSeq = this.notificationSeq;
+        snapshot.reportSeq = this.reportSeq;
+        return snapshot;
     }
 
     // ===================== Null-safe Helper =====================
-    private <K, V> Map<K, V> nvlMap(Map<K, V> m) {
-        return (m != null) ? m : new HashMap<>();
+    private <K, V> Map<K, V> mapOrEmpty(Map<K, V> map) {
+        return (map != null) ? map : new HashMap<>();
     }
 
-    private <T> Set<T> nvlSet(Set<T> s) {
-        return (s != null) ? s : new HashSet<>();
+    private <T> Set<T> setOrEmpty(Set<T> set) {
+        return (set != null) ? set : new HashSet<>();
     }
 
-    private int nzOrDefault(int val, int defVal) {
-        return (val != 0) ? val : defVal;
+    private int valueOrDefaultIfZero(int value, int defaultValue) {
+        return (value != 0) ? value : defaultValue;
     }
 
     // ===================== Getter =====================
@@ -203,9 +203,8 @@ public class DataStore {
     public Set<String> rrnSet() { return rrnSet; }
 
     // ===================== ID 시퀀스 메서드 =====================
-    // synchronized → 멀티스레드 환경에서 동시 접근 시 ID 중복 방지
-    public synchronized int nextPostId() { return ++postSeq; }
-    public synchronized int nextTradeId() { return ++tradeSeq; }
-    public synchronized int nextNotificationId() { return ++notificationSeq; }
-    public synchronized int nextReportId() { return ++reportSeq; }
+    public int nextPostId() { return ++postSeq; }
+    public int nextTradeId() { return ++tradeSeq; }
+    public int nextNotificationId() { return ++notificationSeq; }
+    public int nextReportId() { return ++reportSeq; }
 }

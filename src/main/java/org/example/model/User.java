@@ -30,7 +30,7 @@ public class User implements Serializable {
     private final String name;
 
     /** 주민등록번호 (예: 123456-1234567) */
-    private final String rrn;
+    private final String residentRegistrationNumber;
 
     /** 나이 */
     private final int age;
@@ -67,16 +67,16 @@ public class User implements Serializable {
      * Builder 전용 생성자
      * 외부에서 직접 생성자 호출을 막고, 반드시 Builder를 통해 생성하도록 강제한다.
      */
-    private User(Builder b) {
-        this.id = b.id;
-        this.nickname = b.nickname;
-        this.name = b.name;
-        this.rrn = b.rrn;
-        this.age = b.age;
-        this.gender = b.gender;
-        this.salt = b.salt;
-        this.passwordHash = b.passwordHash;
-        this.role = (b.role != null) ? b.role : Role.MEMBER; // 기본 역할은 MEMBER
+    private User(Builder builder) {
+        this.id = builder.id;
+        this.nickname = builder.nickname;
+        this.name = builder.name;
+        this.residentRegistrationNumber = builder.rrn;
+        this.age = builder.age;
+        this.gender = builder.gender;
+        this.salt = builder.salt;
+        this.passwordHash = builder.passwordHash;
+        this.role = (builder.role != null) ? builder.role : Role.MEMBER; // 기본 역할은 MEMBER
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
     }
@@ -120,19 +120,28 @@ public class User implements Serializable {
 
     // ===================== 도메인 동작 =====================
     /** updatedAt을 현재 시각으로 갱신 */
-    public void touch() { this.updatedAt = LocalDateTime.now(); }
+    public void refreshUpdatedAt() { this.updatedAt = LocalDateTime.now(); }
+
+    /** (호환용) 기존 이름 유지 — 내부적으로 refreshUpdatedAt 호출 */
+    public void touch() { refreshUpdatedAt(); }
 
     /** 신뢰도 좋은 평가 1 증가 */
-    public void addTrustGood() { this.trustGood++; touch(); }
+    public void incrementTrustGood() { this.trustGood++; refreshUpdatedAt(); }
 
     /** 신뢰도 나쁜 평가 1 증가 */
-    public void addTrustBad() { this.trustBad++; touch(); }
+    public void incrementTrustBad() { this.trustBad++; refreshUpdatedAt(); }
+
+    /** (호환용) 기존 메서드 이름 유지 */
+    public void addTrustGood() { incrementTrustGood(); }
+
+    /** (호환용) 기존 메서드 이름 유지 */
+    public void addTrustBad() { incrementTrustBad(); }
 
     // ===================== Getter/Setter =====================
     public String getId() { return id; }
     public String getNickname() { return nickname; }
     public String getName() { return name; }
-    public String getRrn() { return rrn; }
+    public String getRrn() { return residentRegistrationNumber; }
     public int getAge() { return age; }
     public String getGender() { return gender; }
     public Role getRole() { return role; }
@@ -143,17 +152,17 @@ public class User implements Serializable {
     public int getTrustGood() { return trustGood; }
     public int getTrustBad() { return trustBad; }
 
-    public void setNickname(String nickname) { this.nickname = nickname; touch(); }
-    public void setRole(Role role) { this.role = role; touch(); }
+    public void setNickname(String nickname) { this.nickname = nickname; refreshUpdatedAt(); }
+    public void setRole(Role role) { this.role = role; refreshUpdatedAt(); }
 
     // ===================== equals & hashCode =====================
     /**
      * 두 User 객체는 id가 같으면 동일한 사용자로 간주한다.
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User other)) return false;  // Java 16+ 패턴 매칭
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof User other)) return false;  // Java 16+ 패턴 매칭
         return Objects.equals(id, other.id);
     }
 

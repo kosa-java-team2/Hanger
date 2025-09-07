@@ -22,13 +22,13 @@ public class Report implements Serializable {
     private final int reportId;
 
     /** 신고를 작성한 사용자 ID */
-    private final String reporterId;
+    private final String reporterUserId;
 
     /** 신고 대상 사용자 ID (추후 확장 시 postId 등으로 대체 가능) */
-    private final String targetUserId;
+    private final String reportedTargetUserId;
 
     /** 신고 사유 (예: 부적절한 게시글, 사기 의심, 욕설 등) */
-    private final String reason;
+    private final String reportReason;
 
     /** 신고 생성 시각 (객체 생성 시 고정) */
     private final LocalDateTime createdAt = LocalDateTime.now();
@@ -38,22 +38,22 @@ public class Report implements Serializable {
      * Report 객체 생성자
      *
      * @param reportId     신고 ID
-     * @param reporterId   신고자 ID
-     * @param targetUserId 신고 대상 사용자 ID
-     * @param reason       신고 사유
+     * @param reporterUserId   신고자 ID
+     * @param reportedTargetUserId 신고 대상 사용자 ID
+     * @param reportReason       신고 사유
      */
-    public Report(int reportId, String reporterId, String targetUserId, String reason) {
+    public Report(int reportId, String reporterUserId, String reportedTargetUserId, String reportReason) {
         this.reportId = reportId;
-        this.reporterId = reporterId;
-        this.targetUserId = targetUserId;
-        this.reason = reason;
+        this.reporterUserId = reporterUserId;
+        this.reportedTargetUserId = reportedTargetUserId;
+        this.reportReason = reportReason;
     }
 
     // ===================== Getter 메서드 =====================
     public int getReportId() { return reportId; }
-    public String getReporterId() { return reporterId; }
-    public String getTargetUserId() { return targetUserId; }
-    public String getReason() { return reason; }
+    public String getReporterUserId() { return reporterUserId; }
+    public String getReportedTargetUserId() { return reportedTargetUserId; }
+    public String getReportReason() { return reportReason; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
     // ===================== toString =====================
@@ -63,7 +63,9 @@ public class Report implements Serializable {
      */
     @Override
     public String toString() {
-        return String.format("Report[%d] %s -> %s | %s | %s",
-                reportId, reporterId, targetUserId, createdAt, reason);
+        return String.format(
+                "Report[%d] %s -> %s | %s | %s",
+                reportId, reporterUserId, reportedTargetUserId, createdAt, reportReason
+        );
     }
 }

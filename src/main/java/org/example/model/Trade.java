@@ -23,16 +23,16 @@ public class Trade implements Serializable {
     private final int tradeId;
 
     /** 거래 대상 게시글 ID */
-    private final int postId;
+    private final int relatedPostId;
 
     /** 구매자 ID */
-    private final String buyerId;
+    private final String buyerUserId;
 
     /** 판매자 ID */
-    private final String sellerId;
+    private final String sellerUserId;
 
     /** 거래 상태 (기본값: REQUESTED) */
-    private TradeStatus status = TradeStatus.REQUESTED;
+    private TradeStatus tradeStatus = TradeStatus.REQUESTED;
 
     /** 거래 생성 시각 */
     private final LocalDateTime createdAt = LocalDateTime.now();
@@ -46,7 +46,7 @@ public class Trade implements Serializable {
      * - true: 좋은 평가(good)
      * - false: 나쁜 평가(bad)
      */
-    private Boolean buyerRatedGood;
+    private Boolean buyerEvaluationGood;
 
     /**
      * 판매자의 평가 여부 (선택적 사용)
@@ -54,67 +54,90 @@ public class Trade implements Serializable {
      * - true: 좋은 평가(good)
      * - false: 나쁜 평가(bad)
      */
-    private Boolean sellerRatedGood;
+    private Boolean sellerEvaluationGood;
 
     // ===================== 생성자 =====================
     /**
      * Trade 객체 생성자
      *
      * @param tradeId  거래 ID
-     * @param postId   거래 대상 게시글 ID
-     * @param buyerId  구매자 ID
-     * @param sellerId 판매자 ID
+     * @param relatedPostId   거래 대상 게시글 ID
+     * @param buyerUserId  구매자 ID
+     * @param sellerUserId 판매자 ID
      */
-    public Trade(int tradeId, int postId, String buyerId, String sellerId) {
+    public Trade(int tradeId, int relatedPostId, String buyerUserId, String sellerUserId) {
         this.tradeId = tradeId;
-        this.postId = postId;
-        this.buyerId = buyerId;
-        this.sellerId = sellerId;
+        this.relatedPostId = relatedPostId;
+        this.buyerUserId = buyerUserId;
+        this.sellerUserId = sellerUserId;
     }
 
     // ===================== Getter 메서드 =====================
     public int getTradeId() { return tradeId; }
-    public int getPostId() { return postId; }
-    public String getBuyerId() { return buyerId; }
-    public String getSellerId() { return sellerId; }
-    public TradeStatus getStatus() { return status; }
+    public int getRelatedPostId() { return relatedPostId; }
+    public String getBuyerUserId() { return buyerUserId; }
+    public String getSellerUserId() { return sellerUserId; }
+    public TradeStatus getTradeStatus() { return tradeStatus; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public Boolean getBuyerRatedGood() { return buyerRatedGood; }
-    public Boolean getSellerRatedGood() { return sellerRatedGood; }
+    public Boolean getBuyerEvaluationGood() { return buyerEvaluationGood; }
+    public Boolean getSellerEvaluationGood() { return sellerEvaluationGood; }
 
     // ===================== 상태 변경 메서드 =====================
     /** 거래 상태를 직접 지정 */
-    public void setStatus(TradeStatus status) { this.status = status; touch(); }
+    public void updateTradeStatus(TradeStatus newStatus) {
+        this.tradeStatus = newStatus;
+        refreshUpdatedAt();
+    }
 
     /** 거래 수락 (REQUESTED → ACCEPTED) */
-    public void markAccepted() { this.status = TradeStatus.ACCEPTED; touch(); }
+    public void acceptTrade() {
+        this.tradeStatus = TradeStatus.ACCEPTED;
+        refreshUpdatedAt();
+    }
 
     /** 거래 진행 중으로 변경 (ACCEPTED → IN_PROGRESS) */
-    public void markInProgress() { this.status = TradeStatus.IN_PROGRESS; touch(); }
+    public void startTradeProgress() {
+        this.tradeStatus = TradeStatus.IN_PROGRESS;
+        refreshUpdatedAt();
+    }
 
     /** 거래 완료 (IN_PROGRESS → COMPLETED) */
-    public void markCompleted() { this.status = TradeStatus.COMPLETED; touch(); }
+    public void completeTrade() {
+        this.tradeStatus = TradeStatus.COMPLETED;
+        refreshUpdatedAt();
+    }
 
     /** 거래 취소 (REQUESTED/ACCEPTED/IN_PROGRESS → CANCELLED) */
-    public void markCancelled() { this.status = TradeStatus.CANCELLED; touch(); }
+    public void cancelTrade() {
+        this.tradeStatus = TradeStatus.CANCELLED;
+        refreshUpdatedAt();
+    }
 
     // ===================== 평가 메서드 =====================
     /**
      * 구매자가 판매자에 대해 평가 (good/bad)
-     * @param good true=good, false=bad
+     * @param isGood true=good, false=bad
      */
-    public void rateByBuyer(boolean good) { this.buyerRatedGood = good; touch(); }
+    public void evaluateByBuyer(boolean isGood) {
+        this.buyerEvaluationGood = isGood;
+        refreshUpdatedAt();
+    }
 
     /**
      * 판매자가 구매자에 대해 평가 (good/bad)
-     * @param good true=good, false=bad
+     * @param isGood true=good, false=bad
      */
-    public void rateBySeller(boolean good) { this.sellerRatedGood = good; touch(); }
+    public void evaluateBySeller(boolean isGood) {
+        this.sellerEvaluationGood = isGood;
+        refreshUpdatedAt();
+    }
 
     // ===================== 내부 헬퍼 =====================
     /** updatedAt을 현재 시각으로 갱신 */
-    private void touch() { this.updatedAt = LocalDateTime.now(); }
+    private void refreshUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // ===================== toString =====================
     /**
@@ -124,6 +147,6 @@ public class Trade implements Serializable {
     @Override
     public String toString() {
         return String.format("Trade[%d] post=%d buyer=%s seller=%s status=%s",
-                tradeId, postId, buyerId, sellerId, status);
+                tradeId, relatedPostId, buyerUserId, sellerUserId, tradeStatus);
     }
 }

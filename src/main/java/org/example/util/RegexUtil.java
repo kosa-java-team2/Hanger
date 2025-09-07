@@ -58,24 +58,24 @@ public final class RegexUtil {   // final → 상속 방지
      * 사용자 ID 형식 검증
      * 허용: [a-zA-Z0-9], 길이 4~16
      */
-    public static boolean isValidUserId(String s) {
-        return USER_ID.matcher(s).matches();
+    public static boolean isValidUserId(String input) {
+        return USER_ID.matcher(input).matches();
     }
 
     /**
      * 닉네임 형식 검증
      * 공백 문자를 포함하지 않는 2~20자
      */
-    public static boolean isValidNickname(String s) {
-        return NICKNAME.matcher(s).matches();
+    public static boolean isValidNickname(String input) {
+        return NICKNAME.matcher(input).matches();
     }
 
     /**
      * 주민등록번호 형식 검증(YYYYMMDD-XXXXXXX 형태의 숫자 개수만 확인)
      * 실제 생년월일/성별 코드/체크섬 검사는 포함하지 않는다.
      */
-    public static boolean isValidRRN(String s) {
-        return RRN.matcher(s).matches();
+    public static boolean isValidRRN(String input) {
+        return RRN.matcher(input).matches();
     }
 
     /**
@@ -83,7 +83,7 @@ public final class RegexUtil {   // final → 상속 방지
      * - 쉼표 포함 형식(PRICE_COMMA) 또는 숫자만(PRICE_PLAIN) 중 하나라도 만족하면 true
      * - 숫자 범위(최대/최소), 선행 0 허용 여부 등은 별도 정책으로 호출부에서 판단한다.
      */
-    public static boolean isValidPriceWithCommaOrPlain(String s) {
-        return PRICE_COMMA.matcher(s).matches() || PRICE_PLAIN.matcher(s).matches();
+    public static boolean isValidPriceWithCommaOrPlain(String input) {
+        return PRICE_COMMA.matcher(input).matches() || PRICE_PLAIN.matcher(input).matches();
     }
 }

@@ -5,8 +5,9 @@ import org.example.model.Role;
 import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.datastore.DataStore;
+import org.example.util.SortUtil;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,49 +54,50 @@ public class AdminService {
      */
     public void manageUsers() {
         // 사용자 목록을 ID 기준 오름차순으로 정렬
-        List<User> list = store.users().values().stream()
-                .sorted(Comparator.comparing(User::getId))
-                .toList();
+        List<User> userList = new ArrayList<>(store.users().values());
+        SortUtil.sortUsersById(userList);
 
         // 사용자 요약 정보 출력
         System.out.println("====== 사용자 목록 ======");
-        for (User u : list) {
+        for (User user : userList) {
             System.out.printf(
                     "아이디: %s | 닉네임: %s | 나이: %d | 성별: %s | 권한: %s | 생성일: %s | 신뢰도: G%d/B%d%n",
-                    u.getId(), u.getNickname(), u.getAge(), u.getGender(), u.getRole(),
-                    u.getCreatedAt(), u.getTrustGood(), u.getTrustBad()
+                    user.getId(), user.getNickname(), user.getAge(), user.getGender(), user.getRole(),
+                    user.getCreatedAt(), user.getTrustGood(), user.getTrustBad()
             );
         }
         System.out.println("========================");
 
         // 삭제 대상 사용자 ID 입력(0 = 취소)
-        String id = InputUtil.readNonEmptyLine("삭제할 사용자 ID(0=취소): ");
-        if ("0".equals(id)) return;
+        String targetUserId = InputUtil.readNonEmptyLine("삭제할 사용자 ID(0=취소): ");
+        if ("0".equals(targetUserId)) return;
 
         // 존재 여부 확인
-        User u = store.users().get(id);
-        if (u == null) {
+        User targetUser = store.users().get(targetUserId);
+        if (targetUser == null) {
             System.out.println("해당 사용자가 없습니다.");
             return;
         }
 
         // 관리자 계정 보호
-        if (u.getRole() == Role.ADMIN) {
+        if (targetUser.getRole() == Role.ADMIN) {
             System.out.println("관리자 계정은 삭제할 수 없습니다.");
             return;
         }
 
         // 해당 사용자가 작성한 게시글도 함께 논리 삭제(삭제 마킹)
-        store.posts().values().stream()
-                .filter(p -> !p.isDeleted() && p.getSellerId().equals(id))
-                .forEach(Post::markDeleted);
+        for (Post post : store.posts().values()) {
+            if (!post.isDeleted() && post.getSellerId().equals(targetUserId)) {
+                post.markAsDeleted();
+            }
+        }
 
         // 사용자 삭제 및 주민번호 인덱스에서 제거
-        store.users().remove(id);
-        store.rrnSet().remove(u.getRrn());
+        store.users().remove(targetUserId);
+        store.rrnSet().remove(targetUser.getRrn());
 
         // 현재 상태 저장
-        store.saveAll();
+        store.saveToDisk();
         System.out.println("삭제 완료");
     }
 
@@ -114,30 +116,35 @@ public class AdminService {
      */
     public void managePosts() {
         // 삭제되지 않은 게시글만 postId 오름차순으로 정렬
-        List<Post> list = store.posts().values().stream()
-                .filter(p -> !p.isDeleted())
-                .sorted(Comparator.comparing(Post::getPostId))
-                .toList();
+        List<Post> postList = new ArrayList<>();
+        for (Post post : store.posts().values()) {
+            if (!post.isDeleted()) {
+                postList.add(post);
+            }
+        }
+        SortUtil.sortPostsById(postList);
 
         // 게시글 목록 출력 (Post.toString() 사용)
         System.out.println("====== 게시글 목록 ======");
-        list.forEach(System.out::println);
+        for (Post post : postList) {
+            System.out.println(post);
+        }
         System.out.println("========================");
 
         // 삭제 대상 게시글 번호 입력(0 = 취소)
-        int pid = InputUtil.readInt("삭제할 게시글 번호(0=취소): ");
-        if (pid == 0) return;
+        int targetPostId = InputUtil.readInt("삭제할 게시글 번호(0=취소): ");
+        if (targetPostId == 0) return;
 
         // 대상 게시글 조회
-        Post p = store.posts().get(pid);
-        if (p == null || p.isDeleted()) {
+        Post targetPost = store.posts().get(targetPostId);
+        if (targetPost == null || targetPost.isDeleted()) {
             System.out.println("해당 게시글이 없습니다.");
             return;
         }
 
         // 논리 삭제 후 저장
-        p.markDeleted();
-        store.saveAll();
+        targetPost.markAsDeleted();
+        store.saveToDisk();
         System.out.println("삭제 완료");
     }
 }

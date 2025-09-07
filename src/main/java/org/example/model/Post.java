@@ -1,7 +1,6 @@
 package org.example.model;
 
 import org.example.util.PriceUtil;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -32,7 +31,7 @@ public class Post implements Serializable {
     private String category;
 
     /** 판매 가격 (원 단위) */
-    private int price;
+    private int priceInWon;
 
     /** 게시글 상태 (기본값: 판매중 ON_SALE) */
     private PostStatus status = PostStatus.ON_SALE;
@@ -41,10 +40,10 @@ public class Post implements Serializable {
     private final String sellerId;
 
     /** 거래 희망 위치 */
-    private String location;
+    private String preferredLocation;
 
     /** 상품 상태 (예: 새상품, 중고, 사용감 있음 등) */
-    private ConditionLevel condition;
+    private ConditionLevel conditionLevel;
 
     /** 상세 설명 */
     private String description;
@@ -56,7 +55,7 @@ public class Post implements Serializable {
     private LocalDateTime updatedAt;
 
     /** 삭제 여부 (true=삭제됨, false=정상) */
-    private boolean isDeleted = false;
+    private boolean deleted = false;
 
     // ===================== 생성자 (private: Builder 전용) =====================
     /**
@@ -66,10 +65,10 @@ public class Post implements Serializable {
         this.postId = builder.postId;
         this.title = builder.title;
         this.category = builder.category;
-        this.price = builder.price;
+        this.priceInWon = builder.price;
         this.sellerId = builder.sellerId;
-        this.location = builder.location;
-        this.condition = builder.condition;
+        this.preferredLocation = builder.location;
+        this.conditionLevel = builder.condition;
         this.description = builder.description;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -79,7 +78,9 @@ public class Post implements Serializable {
      * updatedAt 값을 현재 시각으로 갱신하는 메서드
      * (게시글 수정이 일어날 때마다 호출)
      */
-    public void touch() { this.updatedAt = LocalDateTime.now(); }
+    public void refreshUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // ===================== Builder 클래스 =====================
     /**
@@ -117,30 +118,54 @@ public class Post implements Serializable {
     public int getPostId() { return postId; }
     public String getTitle() { return title; }
     public String getCategory() { return category; }
-    public int getPrice() { return price; }
+    public int getPrice() { return priceInWon; }
     public PostStatus getStatus() { return status; }
     public String getSellerId() { return sellerId; }
-    public String getLocation() { return location; }
-    public ConditionLevel getCondition() { return condition; }
+    public String getLocation() { return preferredLocation; }
+    public ConditionLevel getCondition() { return conditionLevel; }
     public String getDescription() { return description; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public boolean isDeleted() { return isDeleted; }
+    public boolean isDeleted() { return deleted; }
 
     // ---- Setter (수정 시 updatedAt 자동 갱신) ----
-    public void setTitle(String title) { this.title = title; touch(); }
-    public void setCategory(String category) { this.category = category; touch(); }
-    public void setPrice(int price) { this.price = price; touch(); }
-    public void setStatus(PostStatus status) { this.status = status; touch(); }
-    public void setLocation(String location) { this.location = location; touch(); }
-    public void setCondition(ConditionLevel condition) { this.condition = condition; touch(); }
-    public void setDescription(String description) { this.description = description; touch(); }
+    public void setTitle(String title) {
+        this.title = title;
+        refreshUpdatedAt();
+    }
+    public void setCategory(String category) {
+        this.category = category;
+        refreshUpdatedAt();
+    }
+    public void setPrice(int price) {
+        this.priceInWon = price;
+        refreshUpdatedAt();
+    }
+    public void setStatus(PostStatus status) {
+        this.status = status;
+        refreshUpdatedAt();
+    }
+    public void setLocation(String location) {
+        this.preferredLocation = location;
+        refreshUpdatedAt();
+    }
+    public void setCondition(ConditionLevel condition) {
+        this.conditionLevel = condition;
+        refreshUpdatedAt();
+    }
+    public void setDescription(String description) {
+        this.description = description;
+        refreshUpdatedAt();
+    }
 
     /**
      * 게시글을 삭제 상태로 표시
      * (실제 데이터를 지우지 않고 논리적 삭제 처리)
      */
-    public void markDeleted() { this.isDeleted = true; touch(); }
+    public void markAsDeleted() {
+        this.deleted = true;
+        refreshUpdatedAt();
+    }
 
     // ===================== toString =====================
     /**
@@ -149,7 +174,9 @@ public class Post implements Serializable {
      */
     @Override
     public String toString() {
-        return String.format("[%d] %s | %s | %s원 | %s | %s",
-                postId, title, category, PriceUtil.format(price), status, sellerId);
+        return String.format(
+                "[%d] %s | %s | %s원 | %s | %s",
+                postId, title, category, PriceUtil.format(priceInWon), status, sellerId
+        );
     }
 }
