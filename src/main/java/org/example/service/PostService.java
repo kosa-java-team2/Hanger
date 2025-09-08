@@ -8,6 +8,7 @@ import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.util.PriceUtil;
 import org.example.util.SortUtil;
+import org.example.util.ProfanityFilter;
 
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -16,12 +17,6 @@ public class PostService {
     private final DataStore store;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    // 금칙어 목록
-    private static final Set<String> BANNED = new HashSet<>(Arrays.asList(
-            "금지어", "비속어", "욕설"
-    ));
-
-    // ✅ 카테고리 필터 선택 값 저장
     private String selectedCategory = null;
 
     public PostService(DataStore store) {
@@ -32,7 +27,7 @@ public class PostService {
     public void createPost(User user) {
         System.out.println("====== 게시물 등록 ====== ");
         String title = InputUtil.readNonEmptyLine("상품명: ");
-        if (containsBanned(title)) {
+        if (ProfanityFilter.containsBannedWord(title)) {
             System.out.println("금칙어가 포함되어 등록할 수 없습니다.");
             return;
         }
@@ -58,7 +53,7 @@ public class PostService {
         }
 
         String description = InputUtil.readNonEmptyLine("상품 상세설명: ");
-        if (containsBanned(description)) {
+        if (ProfanityFilter.containsBannedWord(description)) { // ✅ 금칙어 검사
             System.out.println("금칙어가 포함되어 등록할 수 없습니다.");
             return;
         }
@@ -116,7 +111,6 @@ public class PostService {
                     break;
                 case SORT:
                     sortOption = readSortOption();
-                    // ✅ 정렬/카테고리 변경 시, 리스트 다시 필터링
                     filtered = new ArrayList<>(filterPostsForSearch(currentUser, keyword));
                     SortUtil.applyPostSort(filtered, sortOption);
                     currentPage = 1;
@@ -153,18 +147,15 @@ public class PostService {
         }
     }
 
-    // ✅ 카테고리 필터 반영
     private List<Post> filterPostsForSearch(User currentUser, String keyword) {
         final String normalizedKeyword = normalizeToLower(keyword);
         List<Post> result = new ArrayList<>();
 
         for (Post post : store.posts().values()) {
             if (shouldSkipPostForSearch(post, currentUser, normalizedKeyword)) continue;
-
             if (selectedCategory != null && !selectedCategory.isEmpty()) {
                 if (!post.getCategory().equals(selectedCategory)) continue;
             }
-
             result.add(post);
         }
         return result;
@@ -213,7 +204,6 @@ public class PostService {
 
     private void renderPosts(List<Post> posts) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
         for (Post post : posts) {
             User seller = store.users().get(post.getSellerId());
             String sellerNick = seller != null ? seller.getNickname() : post.getSellerId();
@@ -274,11 +264,11 @@ public class PostService {
         System.out.println("정렬 방식을 선택하세요: 1.가격낮은순 2.가격높은순 3.최신순 4.카테고리");
         int option = InputUtil.readIntInRange("선택: ", 1, 4);
 
-        if (option == 4) { // ✅ 카테고리 선택 → selectedCategory 저장
+        if (option == 4) {
             selectedCategory = readCategoryOption();
             System.out.println("선택한 카테고리: " + selectedCategory);
         } else {
-            selectedCategory = null; // 다른 정렬 시 카테고리 필터 해제
+            selectedCategory = null;
         }
         return option;
     }
@@ -389,7 +379,7 @@ public class PostService {
         switch (menuSelection) {
             case 1:
                 String newTitle = InputUtil.readNonEmptyLine("새 제목: ");
-                if (containsBanned(newTitle)) {
+                if (ProfanityFilter.containsBannedWord(newTitle)) { // ✅ 금칙어 검사
                     System.out.println("금칙어 포함");
                     return;
                 }
@@ -417,7 +407,7 @@ public class PostService {
                 break;
             case 5:
                 String newDescription = InputUtil.readNonEmptyLine("새 설명: ");
-                if (containsBanned(newDescription)) {
+                if (ProfanityFilter.containsBannedWord(newDescription)) { // ✅ 금칙어 검사
                     System.out.println("금칙어 포함");
                     return;
                 }
@@ -447,7 +437,6 @@ public class PostService {
 
     private void printDetail(Post post) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
         System.out.println("====== 상품 조회 ======");
         System.out.println("상품번호: " + post.getPostId());
         System.out.println("제목: " + post.getTitle());
@@ -467,25 +456,10 @@ public class PostService {
     }
 
     // ===================== 유틸 =====================
-
-    /**
-     * 문자열에 금칙어가 포함되는지 단순 검사(부분 일치, 대소문자 무시)
-     */
-    private boolean containsBanned(String text) {
-        String lower = text.toLowerCase();
-        for (String bannedWord : BANNED) {
-            if (lower.contains(bannedWord.toLowerCase())) return true;
-        }
-        return false;
-    }
-
-    /**
-     * "상/중/하" → ConditionLevel 매핑
-     */
     private ConditionLevel mapConditionFromLabel(String label) {
         switch (label) {
-            case "상":
-                return ConditionLevel.HIGH;
+            case "상": return
+                    ConditionLevel.HIGH;
             case "중":
                 return ConditionLevel.MEDIUM;
             case "하":
