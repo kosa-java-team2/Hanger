@@ -24,7 +24,7 @@ import java.util.Base64;
  * - 입력/출력은 Base64로 인코딩된 바이트를 문자열로 주고받습니다.
  */
 public final class PasswordUtil {   // final 붙이면 상속도 방지
-    /** 안전한 난수 생성을 위한 CSPRNG */
+    /** 안전한 난수 생성을 위한 SPRANG */
     private static final SecureRandom RNG = new SecureRandom();
 
     // 🔒 인스턴스화를 막기 위한 private 생성자

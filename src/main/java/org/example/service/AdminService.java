@@ -62,7 +62,7 @@ public class AdminService {
         for (User user : userList) {
             System.out.printf(
                     "아이디: %s | 닉네임: %s | 나이: %d | 성별: %s | 권한: %s | 생성일: %s | 신뢰도: G%d/B%d%n",
-                    user.getId(), user.getNickname(), user.getAge(), user.getGender(), user.getRole(),
+                    user.getId(), user.getNickname(), user.getAge(), user.getGender(), user.getRole().getLabel(),
                     user.getCreatedAt(), user.getTrustGood(), user.getTrustBad()
             );
         }

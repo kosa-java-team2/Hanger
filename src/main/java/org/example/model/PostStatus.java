@@ -1,5 +1,7 @@
 package org.example.model;
 
+import lombok.Getter;
+
 /**
  * PostStatus
  * -------------------
@@ -19,19 +21,31 @@ package org.example.model;
  * - PostStatus는 "게시글"의 노출/진행 상태, TradeStatus는 "개별 거래"의 상태를 의미합니다.
  *   필요 시 상태 동기화를 위한 서비스 레이어 정책을 추가하세요.
  */
+@Getter
 public enum PostStatus {
     /** 판매중(기본) — 검색/노출 대상 */
-    ON_SALE,
+    ON_SALE("판매중"),
 
     /** 거래중 — 예약/진행 등으로 신규 요청 제한(정책에 따라 다름) */
-    IN_PROGRESS,
+    IN_PROGRESS("거래중"),
 
     /**
      * 판매됨 — 게시글 차원에서 '판매 완료'를 뜻하는 중간 단계로 사용할 수 있음.
      * 프로젝트에 따라 COMPLETED와 중복될 수 있으니, 한쪽만 쓰는 일관된 정책 권장.
      */
-    SOLD,
+    SOLD("판매됨"),
 
     /** 거래완료 — 거래가 확정 종료된 상태(노출 종료) */
-    COMPLETED
+    COMPLETED("거래완료");
+
+    /**
+     * -- GETTER --
+     * 한글 라벨 반환
+     */
+    private final String label;
+
+    PostStatus(String label) {
+        this.label = label;
+    }
+
 }

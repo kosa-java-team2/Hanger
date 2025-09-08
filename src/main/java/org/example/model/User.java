@@ -156,9 +156,6 @@ public class User implements Serializable {
 
     public String getRrn() { return residentRegistrationNumber; }
 
-    public void setNickname(String nickname) { this.nickname = nickname; refreshUpdatedAt(); }
-    public void setRole(Role role) { this.role = role; refreshUpdatedAt(); }
-
     // ===================== equals & hashCode =====================
     /**
      * 두 User 객체는 id가 같으면 동일한 사용자로 간주한다.

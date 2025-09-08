@@ -1,5 +1,7 @@
 package org.example.model;
 
+import lombok.Getter;
+
 /**
  * TradeStatus
  * -------------------
@@ -20,19 +22,27 @@ package org.example.model;
  * - **ordinal(순서) 의존 금지**: 정렬/우선순위는 명시적 Comparator 또는 점수 매핑 사용.
  * - PostStatus는 "게시글"의 상태, TradeStatus는 "거래 건"의 상태로 역할이 다름.
  */
+@Getter
 public enum TradeStatus {
     /** 요청됨(대기 상태): 구매자가 거래 요청을 보낸 직후 */
-    REQUESTED,
+    REQUESTED("요청됨"),
 
     /** 수락됨: 판매자가 요청을 수락, 일정/조건 조율 단계로 진입 가능 */
-    ACCEPTED,
+    ACCEPTED("수락됨"),
 
     /** 거래 진행중: 실물 거래/송금/택배 진행 등 실질적 처리 단계 */
-    IN_PROGRESS,
+    IN_PROGRESS("진행중"),
 
     /** 거래 완료: 거래가 정상적으로 종료됨(평가 가능) */
-    COMPLETED,
+    COMPLETED("완료됨"),
 
     /** 취소됨: 한쪽 또는 합의에 의해 거래 중단 */
-    CANCELLED
+    CANCELLED("취소됨");
+
+    private final String label;
+
+    TradeStatus(String label) {
+        this.label = label;
+    }
+
 }

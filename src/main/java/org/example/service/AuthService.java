@@ -1,5 +1,6 @@
 package org.example.service;
 
+import lombok.Getter;
 import org.example.datastore.DataStore;
 import org.example.model.Role;
 import org.example.model.User;
@@ -41,17 +42,15 @@ public class AuthService {
 
     // ===================== 상태/협력자 =====================
     private final DataStore store; // 영속 데이터 저장/로드를 담당
+    /**
+     * -- GETTER --
+     *  현재 로그인한 사용자 조회(없으면 null)
+     */
+    @Getter
     private User currentUser;      // 현재 로그인 사용자(세션 개념)
 
     public AuthService(DataStore store) {
         this.store = store;
-    }
-
-    /**
-     * 현재 로그인한 사용자 조회(없으면 null)
-     */
-    public User getCurrentUser() {
-        return currentUser;
     }
 
     // ===================== 기본 관리자 보장 =====================

@@ -1,5 +1,7 @@
 package org.example.model;
 
+import lombok.Getter;
+
 /**
  * Role
  * -------------------
@@ -14,10 +16,22 @@ package org.example.model;
  *   권한이 늘면 새 상수를 추가하는 방식으로 확장하세요(예: MODERATOR).
  * - enum의 **ordinal(순서) 의존 금지**. 권한 비교가 필요하면 명시적 매핑/체크 로직을 사용하세요.
  */
+@Getter
 public enum Role {
     /** 일반 사용자(기본 권한) */
-    MEMBER,
+    MEMBER("일반 사용자"),
 
     /** 관리자(운영/관리 기능 접근) */
-    ADMIN
+    ADMIN("관리자");
+
+    /**
+     * -- GETTER --
+     * 한글 라벨 반환
+     */
+    private final String label;
+
+    Role(String label) {
+        this.label = label;
+    }
+
 }

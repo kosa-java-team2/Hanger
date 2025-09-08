@@ -1,5 +1,7 @@
 package org.example.model;
 
+import lombok.Getter;
+
 /**
  * ConditionLevel
  * -------------------
@@ -19,11 +21,25 @@ package org.example.model;
  *   (예: HIGH.ordinal() < MEDIUM.ordinal() 와 같은 비교는, 상수 순서가 바뀔 경우
  *   의미가 깨질 수 있습니다. 필요 시 별도의 Comparator 또는 점수 매핑을 사용하세요.)
  */
+@Getter
 public enum ConditionLevel {
     /** 상(최상급, 사용감 거의 없음) */
-    HIGH,
+    HIGH("상"),
+
     /** 중(보통, 일반적인 사용감) */
-    MEDIUM,
+    MEDIUM("중"),
+
     /** 하(낮음, 사용감 많음/흠집 등) */
-    LOW
+    LOW("하");
+
+    /**
+     * -- GETTER --
+     * 한글 라벨 반환
+     */
+    private final String label;
+
+    ConditionLevel(String label) {
+        this.label = label;
+    }
+
 }

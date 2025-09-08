@@ -145,7 +145,7 @@ public class PostService {
         int currentPage = 1;
 
         while (true) {
-            Page page = paginate(filtered, currentPage, pageSize);
+            Page page = paginate(filtered, currentPage);
             renderPageHeader(page.total, page.currentPage, page.totalPages, sortOption);
             renderPosts(page.items);
 
@@ -254,16 +254,16 @@ public class PostService {
      * 주의:
      * - Math.clamp는 Java 21+에 존재합니다. 더 낮은 버전 사용 시 직접 보정 코드를 사용하세요.
      */
-    private Page paginate(List<Post> posts, int currentPage, int pageSize) {
+    private Page paginate(List<Post> posts, int currentPage) {
         int total = posts.size();
-        int totalPages = Math.max(1, (total + pageSize - 1) / pageSize);
+        int totalPages = Math.max(1, (total + 10 - 1) / 10);
 
         int safePage = currentPage;
         if (safePage < 1) safePage = 1;
         if (safePage > totalPages) safePage = totalPages;
 
-        int fromIndex = (safePage - 1) * pageSize;
-        int toIndex = Math.min(fromIndex + pageSize, total);
+        int fromIndex = (safePage - 1) * 10;
+        int toIndex = Math.min(fromIndex + 10, total);
         return new Page(posts.subList(fromIndex, toIndex), safePage, totalPages, total);
     }
 
@@ -290,7 +290,7 @@ public class PostService {
                     post.getTitle(),
                     post.getCategory(),
                     PriceUtil.format(post.getPrice()),
-                    post.getStatus(),
+                    post.getStatus().getLabel(),        // ✅ 한글 라벨
                     sellerNick,
                     rank.isEmpty() ? "" : " (" + rank + ")",
                     post.getCreatedAt());
@@ -546,8 +546,8 @@ public class PostService {
         System.out.println("제목: " + post.getTitle());
         System.out.println("카테고리: " + post.getCategory());
         System.out.println("가격: " + PriceUtil.format(post.getPrice()));
-        System.out.println("상품 상태: " + post.getStatus());
-        System.out.println("컨디션: " + post.getCondition());
+        System.out.println("상품 상태: " + post.getStatus().getLabel());
+        System.out.println("컨디션: " + post.getCondition().getLabel());
         System.out.println("상세설명: " + post.getDescription());
         System.out.println("거래위치: " + post.getLocation());
         System.out.println("생성일: " + post.getCreatedAt());

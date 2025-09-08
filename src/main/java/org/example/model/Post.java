@@ -181,7 +181,7 @@ public class Post implements Serializable {
     public String toString() {
         return String.format(
                 "[%d] %s | %s | %s원 | %s | %s",
-                postId, title, category, PriceUtil.format(priceInWon), status, sellerId
+                postId, title, category, PriceUtil.format(priceInWon), status.getLabel(), sellerId
         );
     }
 }

@@ -79,12 +79,6 @@ public class Trade implements Serializable {
     }
 
     // ===================== 상태 변경 메서드 =====================
-    /** 거래 상태를 직접 지정 */
-    public void updateTradeStatus(TradeStatus newStatus) {
-        this.tradeStatus = newStatus;
-        refreshUpdatedAt();
-    }
-
     /** 거래 수락 (REQUESTED → ACCEPTED) */
     public void acceptTrade() {
         this.tradeStatus = TradeStatus.ACCEPTED;

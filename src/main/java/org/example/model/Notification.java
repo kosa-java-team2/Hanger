@@ -30,7 +30,7 @@ public class Notification implements Serializable {
     /** 알림을 수신하는 사용자 ID */
     private final String recipientUserId;
 
-    /** 알림 유형 (예: 거래 알림, 신고 알림 등) */
+    /** 알림 유형 (예: 거래 알림 등) */
     private final NotificationType notificationType;
 
     /** 알림에 표시될 메시지 */
@@ -74,6 +74,6 @@ public class Notification implements Serializable {
      */
     @Override
     public String toString() {
-        return String.format("[%d] %s | %s | %s", notificationId, createdAt, notificationType, notificationMessage);
+        return String.format("[%d] %s | %s | %s", notificationId, createdAt, notificationType.getLabel(), notificationMessage);
     }
 }

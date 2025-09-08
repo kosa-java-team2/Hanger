@@ -1,5 +1,7 @@
 package org.example.model;
 
+import lombok.Getter;
+
 /**
  * NotificationType
  * -------------------
@@ -8,7 +10,6 @@ package org.example.model;
  * 발신(예시):
  * - TradeService.requestTrade(...)              → TRADE_REQUEST
  * - TradeService.notifyCounterpartyOnStatus(...)→ TRADE_ACCEPTED / TRADE_COMPLETED
- * - TradeService.maybeReportUser(...)           → REPORT_RECEIVED
  * <p>
  * 사용(예시):
  * - NotificationService.showMyNotifications(...) 에서 타입에 따라 메시지를 표시.
@@ -18,21 +19,30 @@ package org.example.model;
  *   enum 상수명을 변경/삭제하면 이전에 저장된 데이터와 호환성이 깨질 수 있습니다.
  *   새로운 타입 추가 시에는(예: TRADE_IN_PROGRESS, TRADE_CANCELLED, SYSTEM 등) 기존 상수는 유지하세요.
  */
+@Getter
 public enum NotificationType {
 
     /** 구매자가 거래를 요청했을 때(판매자에게 발송). */
-    TRADE_REQUEST,
+    TRADE_REQUEST("거래 요청"),
 
     /**
      * 거래 상태가 수락/진행/취소 등으로 변경되었음을 알릴 때 사용.
      * 현재 구현에서는 ACCEPTED/IN_PROGRESS/CANCELLED 상태 변경에 공용으로 사용됨.
      * (필요 시 TRADE_IN_PROGRESS, TRADE_CANCELLED 등으로 세분화 권장)
      */
-    TRADE_ACCEPTED,
+    TRADE_ACCEPTED("거래 상태 변경"),
 
     /** 거래가 완료되었음을 상대방에게 알릴 때 사용. */
-    TRADE_COMPLETED,
+    TRADE_COMPLETED("거래 완료");
 
-    /** 신고가 접수되었음을 관리자에게 알릴 때 사용. */
-    REPORT_RECEIVED
+    /**
+     * -- GETTER --
+     * 알림 타입의 한글 라벨 반환
+     */
+    private final String label;
+
+    NotificationType(String label) {
+        this.label = label;
+    }
+
 }

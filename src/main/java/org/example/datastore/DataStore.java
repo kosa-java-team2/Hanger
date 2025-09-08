@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * DataStore 클래스
  * -----------------
- * 애플리케이션 내 주요 도메인 객체(User, Post, Trade, Notification, Report 등)를
+ * 애플리케이션 내 주요 도메인 객체(User, Post, Trade, Notification)를
  * 메모리에 저장하고, 직렬화를 통해 디스크에 저장/로드하는 역할을 담당한다.
  * <p>
  * 주요 특징:
@@ -21,11 +21,10 @@ public class DataStore {
     private static final String DATA_FILE = "store.dat"; // 데이터 저장 파일명
 
     // ===================== 기본 시퀀스 상수 =====================
-    // 각 도메인 엔티티(Post, Trade, Notification, Report)의 고유 ID 생성을 위한 시작값
+    // 각 도메인 엔티티(Post, Trade, Notification)의 고유 ID 생성을 위한 시작값
     private static final int DEFAULT_POST_SEQ = 1000;
     private static final int DEFAULT_TRADE_SEQ = 2000;
     private static final int DEFAULT_NOTIFICATION_SEQ = 3000;
-    private static final int DEFAULT_REPORT_SEQ = 4000;
 
     // ===================== 저장 대상 컬렉션 =====================
     // 사용자 ID(User.id) -> User 객체
@@ -40,9 +39,6 @@ public class DataStore {
     // 알림 번호(notificationId) -> Notification 객체
     private Map<Integer, Notification> notifications = new HashMap<>();
 
-    // 신고 번호(reportId) -> Report 객체
-    private Map<Integer, Report> reports = new HashMap<>();
-
     // 주민등록번호 중복 체크용 (회원가입 시 동일 RRN 방지)
     private Set<String> rrnSet = new HashSet<>();
 
@@ -51,7 +47,6 @@ public class DataStore {
     private int postSeq = DEFAULT_POST_SEQ;
     private int tradeSeq = DEFAULT_TRADE_SEQ;
     private int notificationSeq = DEFAULT_NOTIFICATION_SEQ;
-    private int reportSeq = DEFAULT_REPORT_SEQ;
 
     // ===================== 내부 스냅샷 클래스 =====================
     /**
@@ -67,12 +62,10 @@ public class DataStore {
         Map<Integer, Post> posts;
         Map<Integer, Trade> trades;
         Map<Integer, Notification> notifications;
-        Map<Integer, Report> reports;
         Set<String> rrnSet;
         int postSeq;
         int tradeSeq;
         int notificationSeq;
-        int reportSeq;
     }
 
     // ===================== 데이터 로드 =====================
@@ -131,13 +124,11 @@ public class DataStore {
         this.posts = mapOrEmpty(snapshot.posts);
         this.trades = mapOrEmpty(snapshot.trades);
         this.notifications = mapOrEmpty(snapshot.notifications);
-        this.reports = mapOrEmpty(snapshot.reports);
         this.rrnSet = setOrEmpty(snapshot.rrnSet);
 
         this.postSeq = valueOrDefaultIfZero(snapshot.postSeq, DEFAULT_POST_SEQ);
         this.tradeSeq = valueOrDefaultIfZero(snapshot.tradeSeq, DEFAULT_TRADE_SEQ);
         this.notificationSeq = valueOrDefaultIfZero(snapshot.notificationSeq, DEFAULT_NOTIFICATION_SEQ);
-        this.reportSeq = valueOrDefaultIfZero(snapshot.reportSeq, DEFAULT_REPORT_SEQ);
     }
 
     /**
@@ -148,13 +139,11 @@ public class DataStore {
         this.posts = new HashMap<>();
         this.trades = new HashMap<>();
         this.notifications = new HashMap<>();
-        this.reports = new HashMap<>();
         this.rrnSet = new HashSet<>();
 
         this.postSeq = DEFAULT_POST_SEQ;
         this.tradeSeq = DEFAULT_TRADE_SEQ;
         this.notificationSeq = DEFAULT_NOTIFICATION_SEQ;
-        this.reportSeq = DEFAULT_REPORT_SEQ;
     }
 
     /**
@@ -173,12 +162,10 @@ public class DataStore {
         snapshot.posts = this.posts;
         snapshot.trades = this.trades;
         snapshot.notifications = this.notifications;
-        snapshot.reports = this.reports;
         snapshot.rrnSet = this.rrnSet;
         snapshot.postSeq = this.postSeq;
         snapshot.tradeSeq = this.tradeSeq;
         snapshot.notificationSeq = this.notificationSeq;
-        snapshot.reportSeq = this.reportSeq;
         return snapshot;
     }
 
@@ -200,12 +187,10 @@ public class DataStore {
     public Map<Integer, Post> posts() { return posts; }
     public Map<Integer, Trade> trades() { return trades; }
     public Map<Integer, Notification> notifications() { return notifications; }
-    public Map<Integer, Report> reports() { return reports; }
     public Set<String> rrnSet() { return rrnSet; }
 
     // ===================== ID 시퀀스 메서드 =====================
     public int nextPostId() { return ++postSeq; }
     public int nextTradeId() { return ++tradeSeq; }
     public int nextNotificationId() { return ++notificationSeq; }
-    public int nextReportId() { return ++reportSeq; }
 }
