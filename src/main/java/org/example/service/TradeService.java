@@ -19,7 +19,7 @@ import java.util.List;
  * <p>
  * 설계 노트:
  *  - 모든 영속 데이터는 DataStore를 통해 접근/수정/저장한다.
- *  - 상태 변경/평가 후에는 store.saveAll()로 스냅샷 저장(지속성 보장).
+ *  - 상태 변경/평가 후에는 store.saveToDisk()로 스냅샷 저장(지속성 보장).
  *  - 알림(Notification)은 counterparty(상대방)에게 전송한다.
  *  - 신고 시, 관리자(ADMIN_ID)에게 접수 알림을 보낸다.
  */
@@ -40,7 +40,7 @@ public class TradeService {
      *  1) 본인 글 요청 방지(구매자=판매자면 중단)
      *  2) tradeId 발급 → Trade 생성 → trades 맵에 저장
      *  3) 판매자에게 거래 요청 알림(NotificationType.TRADE_REQUEST) 발송
-     *  4) store.saveAll() 호출
+     *  4) store.saveToDisk() 호출
      *
      * @param buyer 거래를 요청하는 사용자(구매자)
      * @param post  대상 게시글
@@ -78,7 +78,6 @@ public class TradeService {
     public void manageTrades(User currentUser) {
         System.out.println("====== 내 거래 ======");
 
-        // 재사용: loadUserTrades 호출
         List<Trade> myTrades = loadUserTrades(currentUser);
 
         if (myTrades.isEmpty()) {
@@ -88,10 +87,18 @@ public class TradeService {
         renderTrades(myTrades);
 
         switch (readMainAction()) {
-            case 0 -> System.out.println("뒤로 이동합니다.");
-            case 1 -> handleStatusChangeFlow(currentUser);
-            case 2 -> handleEvaluationFlow(currentUser);
-            default -> System.out.println("잘못된 선택입니다.");
+            case 0:
+                System.out.println("뒤로 이동합니다.");
+                break;
+            case 1:
+                handleStatusChangeFlow(currentUser);
+                break;
+            case 2:
+                handleEvaluationFlow(currentUser);
+                break;
+            default:
+                System.out.println("잘못된 선택입니다.");
+                break;
         }
     }
 
@@ -171,23 +178,38 @@ public class TradeService {
     private TradeStatusChoice readTradeStatusChoice() {
         System.out.println("새 상태: 1.수락 2.진행중 3.완료 4.취소");
         int statusOption = InputUtil.readIntInRange("선택: ", 1, 4);
-        return switch (statusOption) {
-            case 1 -> TradeStatusChoice.ACCEPT;
-            case 2 -> TradeStatusChoice.IN_PROGRESS;
-            case 3 -> TradeStatusChoice.COMPLETED;
-            case 4 -> TradeStatusChoice.CANCELLED;
-            default -> TradeStatusChoice.INVALID;
-        };
+        switch (statusOption) {
+            case 1:
+                return TradeStatusChoice.ACCEPT;
+            case 2:
+                return TradeStatusChoice.IN_PROGRESS;
+            case 3:
+                return TradeStatusChoice.COMPLETED;
+            case 4:
+                return TradeStatusChoice.CANCELLED;
+            default:
+                return TradeStatusChoice.INVALID;
+        }
     }
 
     /** 선택된 상태에 따라 Trade 상태 전이 수행 */
     private void applyStatusChange(Trade trade, TradeStatusChoice choice) {
         switch (choice) {
-            case ACCEPT -> trade.acceptTrade();
-            case IN_PROGRESS -> trade.startTradeProgress();
-            case COMPLETED -> trade.completeTrade();
-            case CANCELLED -> trade.cancelTrade();
-            default -> { }
+            case ACCEPT:
+                trade.acceptTrade();
+                break;
+            case IN_PROGRESS:
+                trade.startTradeProgress();
+                break;
+            case COMPLETED:
+                trade.completeTrade();
+                break;
+            case CANCELLED:
+                trade.cancelTrade();
+                break;
+            default:
+                // 아무 작업도 하지 않음
+                break;
         }
     }
 
@@ -221,7 +243,7 @@ public class TradeService {
      * 신뢰도 평가 플로우(완료된 거래만 가능):
      *  1) 거래 ID 입력 → 완료 상태/본인 거래 검증
      *  2) 상대방 사용자 식별(buyer ↔ seller)
-     *  3) good/bad 입력 → 상대방 User 신뢰도 반영
+     *  3) good/bad 입력 → Trade 평가 플래그 기록 + 상대방 User 신뢰도 반영
      *  4) (선택) 신고 접수 → Report 생성 + 관리자 알림
      *  5) 저장
      */
@@ -230,8 +252,35 @@ public class TradeService {
         Trade trade = store.trades().get(tradeId);
         if (!validateIsCompletedMyTradeOrWarn(currentUser, trade)) return;
 
+        // 현재 사용자 기준 상대방 식별
         String counterpartyUserId = resolveCounterpartyId(currentUser, trade);
-        applyTrustEvaluation(counterpartyUserId);
+
+        // 중복 평가 방지
+        boolean isBuyer = currentUser.getId().equals(trade.getBuyerUserId());
+        if (isBuyer && trade.getBuyerEvaluationGood() != null) {
+            System.out.println("이미 평가를 완료하였습니다(구매자).");
+            return;
+        }
+        if (!isBuyer && trade.getSellerEvaluationGood() != null) {
+            System.out.println("이미 평가를 완료하였습니다(판매자).");
+            return;
+        }
+
+        // good/bad 입력
+        Boolean isGood = readGoodBadChoice(); // true=good, false=bad, null=취소
+        if (isGood == null) {
+            System.out.println("평가를 취소했습니다.");
+            return;
+        }
+
+        // ① Trade 모델의 평가 플래그 기록
+        if (isBuyer) trade.evaluateByBuyer(isGood);
+        else trade.evaluateBySeller(isGood);
+
+        // ② 상대방 User의 신뢰도 반영
+        applyTrustEvaluation(counterpartyUserId, isGood);
+
+        // ③ (선택) 신고 플로우
         maybeReportUser(currentUser.getId(), counterpartyUserId);
 
         store.saveToDisk();
@@ -258,16 +307,26 @@ public class TradeService {
                 : trade.getBuyerUserId();
     }
 
+    /** good/bad 선택 입력 (1=good, 2=bad, 0=취소) */
+    private Boolean readGoodBadChoice() {
+        System.out.println("평가: 1.good  2.bad  0.취소");
+        int choice = InputUtil.readIntInRange("선택: ", 0, 2);
+        if (choice == 0) return null;
+        return choice == 1;
+    }
+
     /**
      * 신뢰도 평가 적용:
-     *  - 1: good → addTrustGood()
-     *  - 2: bad  → addTrustBad()
+     *  - true: good → addTrustGood()
+     *  - false: bad  → addTrustBad()
      */
-    private void applyTrustEvaluation(String targetUserId) {
+    private void applyTrustEvaluation(String targetUserId, boolean isGood) {
         User targetUser = store.users().get(targetUserId);
-        System.out.println("평가: 1.good  2.bad");
-        int choice = InputUtil.readIntInRange("선택: ", 1, 2);
-        if (choice == 1) targetUser.addTrustGood();
+        if (targetUser == null) {
+            System.out.println("대상 사용자가 존재하지 않습니다.");
+            return;
+        }
+        if (isGood) targetUser.addTrustGood();
         else targetUser.addTrustBad();
     }
 

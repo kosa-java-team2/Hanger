@@ -153,17 +153,29 @@ public class PostService {
             if (command == Command.EXIT) return;
 
             switch (command) {
-                case NEXT -> currentPage = nextPage(currentPage, page.totalPages);
-                case PREV -> currentPage = prevPage(currentPage);
-                case SORT -> {
+                case NEXT:
+                    currentPage = nextPage(currentPage, page.totalPages);
+                    break;
+                case PREV:
+                    currentPage = prevPage(currentPage);
+                    break;
+                case SORT:
                     sortOption = readSortOption();
                     SortUtil.applyPostSort(filtered, sortOption);
                     currentPage = 1; // 정렬 변경 시 1페이지로 이동
-                }
-                case GOTO -> currentPage = readGoto(page.totalPages);
-                case VIEW -> handleViewDetail();
-                case REQUEST -> handleRequest(currentUser);
-                default -> System.out.println("알 수 없는 명령입니다.");
+                    break;
+                case GOTO:
+                    currentPage = readGoto(page.totalPages);
+                    break;
+                case VIEW:
+                    handleViewDetail();
+                    break;
+                case REQUEST:
+                    handleRequest(currentUser);
+                    break;
+                default:
+                    System.out.println("알 수 없는 명령입니다.");
+                    break;
             }
         }
     }
@@ -302,16 +314,24 @@ public class PostService {
         if (raw == null) raw = "";
         raw = raw.trim().toLowerCase();
 
-        return switch (raw) {
-            case "0" -> Command.EXIT;
-            case "n" -> Command.NEXT;
-            case "p" -> Command.PREV;
-            case "s" -> Command.SORT;
-            case "g" -> Command.GOTO;
-            case "v" -> Command.VIEW;
-            case "r" -> Command.REQUEST;
-            default -> Command.UNKNOWN;
-        };
+        switch (raw) {
+            case "0":
+                return Command.EXIT;
+            case "n":
+                return Command.NEXT;
+            case "p":
+                return Command.PREV;
+            case "s":
+                return Command.SORT;
+            case "g":
+                return Command.GOTO;
+            case "v":
+                return Command.VIEW;
+            case "r":
+                return Command.REQUEST;
+            default:
+                return Command.UNKNOWN;
+        }
     }
 
     /**
@@ -450,24 +470,29 @@ public class PostService {
         int menuSelection = InputUtil.readIntInRange("선택: ", 1, 7);
 
         switch (menuSelection) {
-            case 1 -> {
+            case 1:
                 String newTitle = InputUtil.readNonEmptyLine("새 제목: ");
                 if (containsBanned(newTitle)) {
                     System.out.println("금칙어 포함");
                     return;
                 }
                 post.setTitle(newTitle);
-            }
-            case 2 -> post.setCategory(InputUtil.readNonEmptyLine("새 카테고리: "));
-            case 3 -> {
+                break;
+
+            case 2:
+                post.setCategory(InputUtil.readNonEmptyLine("새 카테고리: "));
+                break;
+
+            case 3:
                 Integer newPrice = InputUtil.readPriceAsInt("새 가격(숫자 or 1,000): ");
                 if (newPrice == null || newPrice < 0) {
                     System.out.println("가격 오류");
                     return;
                 }
                 post.setPrice(newPrice);
-            }
-            case 4 -> {
+                break;
+
+            case 4:
                 String conditionInput = InputUtil.readNonEmptyLine("상품 상태(상/중/하): ");
                 ConditionLevel conditionLevel = mapConditionFromLabel(conditionInput.trim());
                 if (conditionLevel == null) {
@@ -475,27 +500,36 @@ public class PostService {
                     return;
                 }
                 post.setCondition(conditionLevel);
-            }
-            case 5 -> {
+                break;
+
+            case 5:
                 String newDescription = InputUtil.readNonEmptyLine("새 설명: ");
                 if (containsBanned(newDescription)) {
                     System.out.println("금칙어 포함");
                     return;
                 }
                 post.setDescription(newDescription);
-            }
-            case 6 -> post.setLocation(InputUtil.readNonEmptyLine("새 거래위치: "));
-            case 7 -> {
+                break;
+
+            case 6:
+                post.setLocation(InputUtil.readNonEmptyLine("새 거래위치: "));
+                break;
+
+            case 7:
                 System.out.println("상태 선택: 1.판매중 2.거래중 3.거래완료");
                 int statusOption = InputUtil.readIntInRange("선택: ", 1, 3);
-                if (statusOption == 1) post.setStatus(PostStatus.ON_SALE);
-                else if (statusOption == 2) post.setStatus(PostStatus.IN_PROGRESS);
-                else post.setStatus(PostStatus.COMPLETED);
-            }
-            default -> {
+                if (statusOption == 1) {
+                    post.setStatus(PostStatus.ON_SALE);
+                } else if (statusOption == 2) {
+                    post.setStatus(PostStatus.IN_PROGRESS);
+                } else {
+                    post.setStatus(PostStatus.COMPLETED);
+                }
+                break;
+
+            default:
                 System.out.println("취소");
                 return;
-            }
         }
         store.saveToDisk();
         System.out.println("수정 완료");
@@ -542,12 +576,16 @@ public class PostService {
      * "상/중/하" → ConditionLevel 매핑
      */
     private ConditionLevel mapConditionFromLabel(String label) {
-        return switch (label) {
-            case "상" -> ConditionLevel.HIGH;
-            case "중" -> ConditionLevel.MEDIUM;
-            case "하" -> ConditionLevel.LOW;
-            default -> null;
-        };
+        switch (label) {
+            case "상":
+                return ConditionLevel.HIGH;
+            case "중":
+                return ConditionLevel.MEDIUM;
+            case "하":
+                return ConditionLevel.LOW;
+            default:
+                return null;
+        }
     }
 
     /**
@@ -574,12 +612,17 @@ public class PostService {
      * 정렬 옵션 라벨 문자열
      */
     private String sortLabel(int opt) {
-        return switch (opt) {
-            case 1 -> "가격낮은순";
-            case 2 -> "가격높은순";
-            case 3 -> "최신순";
-            case 4 -> "카테고리";
-            default -> "기본";
-        };
+        switch (opt) {
+            case 1:
+                return "가격낮은순";
+            case 2:
+                return "가격높은순";
+            case 3:
+                return "최신순";
+            case 4:
+                return "카테고리";
+            default:
+                return "기본";
+        }
     }
 }
