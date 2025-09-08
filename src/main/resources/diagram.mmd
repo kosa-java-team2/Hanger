@@ -1,12 +1,15 @@
+---
+config:
+  layout: elk
+---
 classDiagram
-    direction BT
+    direction LR
 
 %% ========== Utilities ==========
     class ComparatorLike~T~ {
         <<Interface>>
         + compare(T, T) int
     }
-
     class InputUtil {
         + readNonEmptyLine() String
         + readLine() String
@@ -17,20 +20,16 @@ classDiagram
         + readPasswordTwice(String, String) String
         - Scanner SCANNER
     }
-
     class PasswordHashingException
-
     class PasswordUtil {
         + newSalt() String
         + hash(String, String) String
         - SecureRandom RNG
     }
-
     class PriceUtil {
         + format(int) String
         - NumberFormat NF
     }
-
     class RegexUtil {
         + isValidUserId(String) boolean
         + isValidRRN(String) boolean
@@ -42,7 +41,6 @@ classDiagram
         - Pattern USER_ID
         - Pattern PRICE_PLAIN
     }
-
     class SortUtil {
         - swap(List~T~, int, int) void
         + applyPostSort(List~Post~, int) void
@@ -58,8 +56,12 @@ classDiagram
         + sortTradesById(List~Trade~) void
     }
 
-%% utility relationships
-    SortUtil --> ComparatorLike~T~
+%% minimal util links
+    SortUtil ..> ComparatorLike~T~
+    SortUtil ..> Post
+    SortUtil ..> User
+    SortUtil ..> Notification
+    SortUtil ..> Trade
     PasswordUtil --> PasswordHashingException
 
 %% ========== Services ==========
@@ -68,7 +70,6 @@ classDiagram
         + manageUsers() void
         - DataStore store
     }
-
     class AuthService {
         + getCurrentUser() User
         - isRRNUnique(String) boolean
@@ -93,19 +94,16 @@ classDiagram
         - User currentUser
         - int DEFAULT_ADMIN_AGE
     }
-
     class NotificationService {
         + showMyNotifications(User) void
         - DataStore store
     }
-
     class Page {
         ~ List~Post~ items
         ~ int totalPages
         ~ int total
         ~ int currentPage
     }
-
     class PostService {
         - readSortOption() int
         - containsBanned(String) boolean
@@ -135,7 +133,6 @@ classDiagram
         - Set~String~ BANNED
         - DataStore store
     }
-
     class TradeService {
         - syncRelatedPostStatus(Trade, TradeStatus) void
         - applyStatusChange(Trade, TradeStatus) void
@@ -155,7 +152,6 @@ classDiagram
         - resolveCounterpartyId(User, Trade) String
         - DataStore store
     }
-
     class Command {
         <<enumeration>>
         + values() Command[]
@@ -209,7 +205,6 @@ classDiagram
         - String salt
         - long serialVersionUID
     }
-
     class Role {
         <<enumeration>>
         + getLabel() String
@@ -219,7 +214,6 @@ classDiagram
         +  MEMBER
         - String label
     }
-
     class Post {
         + getPostId() int
         + getLocation() String
@@ -257,7 +251,6 @@ classDiagram
         - PostStatus status
         - String description
     }
-
     class PostStatus {
         <<enumeration>>
         + getLabel() String
@@ -269,7 +262,6 @@ classDiagram
         +  IN_PROGRESS
         +  COMPLETED
     }
-
     class ConditionLevel {
         <<enumeration>>
         + getLabel() String
@@ -280,7 +272,6 @@ classDiagram
         +  LOW
         - String label
     }
-
     class Notification {
         + getNotificationId() int
         + getRecipientUserId() String
@@ -298,7 +289,6 @@ classDiagram
         - int notificationId
         - NotificationType notificationType
     }
-
     class NotificationType {
         <<enumeration>>
         + getLabel() String
@@ -309,7 +299,6 @@ classDiagram
         - String label
         +  TRADE_REQUEST
     }
-
     class Trade {
         + getTradeId() int
         + getRelatedPostId() int
@@ -339,7 +328,6 @@ classDiagram
         - int tradeId
         - LocalDateTime updatedAt
     }
-
     class TradeStatus {
         <<enumeration>>
         + getLabel() String
@@ -353,7 +341,7 @@ classDiagram
         +  ACCEPTED
     }
 
-%% ==== Builder classes (alias to avoid name clash) ====
+%% ==== Builder classes ====
     class UserBuilder {
         + build() User
         + salt(String) UserBuilder
@@ -371,7 +359,6 @@ classDiagram
         - String gender
         - Role role
     }
-
     class PostBuilder {
         + category(String) PostBuilder
         + title(String) PostBuilder
@@ -423,7 +410,6 @@ classDiagram
         - Map~String, User~ users
         - Map~Integer, Post~ posts
     }
-
     class Snapshot {
         ~ Set~String~ rrnSet
         ~ int postSeq
@@ -435,7 +421,6 @@ classDiagram
         ~ Map~Integer, Notification~ notifications
         ~ int notificationSeq
     }
-
     class Main {
         - printWelcome() void
         - run() void
@@ -452,12 +437,16 @@ classDiagram
         - AdminService adminService
     }
 
-%% ========== Relationships ==========
-    User --> UserBuilder : «builds»
-    Post --> PostBuilder : «builds»
+%% ========== Explicit Relationships ==========
 
+%% Builders (방향 수정)
+    UserBuilder --> User : «builds»
+    PostBuilder  --> Post : «builds»
+
+%% Infra snapshot
     DataStore --> Snapshot
 
+%% App wiring
     Main --> DataStore
     Main --> AuthService
     Main --> TradeService
@@ -465,25 +454,61 @@ classDiagram
     Main --> NotificationService
     Main --> AdminService
 
-%% Service dependencies
+%% Service -> Infra/Domain
     AdminService --> DataStore
+    AdminService --> User
+    AdminService --> Post
+
     AuthService --> DataStore
     AuthService --> User
+
     NotificationService --> DataStore
-    NotificationService --> User
+    NotificationService --> Notification
+    NotificationService --> User : "recipient"
+
     PostService --> DataStore
     PostService --> Command
     PostService --> Page
     PostService --> Post
     PostService --> User
+
     TradeService --> DataStore
     TradeService --> TradeStatus
     TradeService --> Trade
     TradeService --> Post
     TradeService --> User
 
-%% Optional: show SortUtil's domain targets (pure helpers)
-    SortUtil ..> Post
-    SortUtil ..> User
-    SortUtil ..> Notification
-    SortUtil ..> Trade
+%% 핵심 도메인 간 연결
+    Post --> User : "sellerId"
+    Trade --> Post : "relatedPostId"
+    Trade --> User : "buyerUserId"
+    Trade --> User : "sellerUserId"
+    Notification --> User : "recipientUserId"
+
+%% 도메인 ↔ ENUM (누락분 보강)
+    User --> Role
+    Post --> PostStatus
+    Post --> ConditionLevel
+    Notification --> NotificationType
+    Trade --> TradeStatus
+
+%% DataStore 보유 관계(느슨하게)
+    DataStore o-- Post : "posts()"
+    DataStore o-- User : "users()"
+    DataStore o-- Trade : "trades()"
+    DataStore o-- Notification : "notifications()"
+
+%% 유틸 사용 의존
+    AuthService ..> InputUtil
+    AuthService ..> RegexUtil
+    AuthService ..> PasswordUtil
+
+    PostService ..> InputUtil
+    PostService ..> RegexUtil
+    PostService ..> PriceUtil
+
+    TradeService ..> InputUtil
+    AdminService ..> InputUtil
+
+%% 선택: Page가 Post 컬렉션을 가짐(약한 의존)
+    Page ..> Post

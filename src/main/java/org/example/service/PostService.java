@@ -141,7 +141,6 @@ public class PostService {
         int sortOption = 3; // 기본: 최신순
         SortUtil.applyPostSort(filtered, sortOption);
 
-        final int pageSize = 10;
         int currentPage = 1;
 
         while (true) {
