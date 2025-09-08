@@ -150,14 +150,20 @@ public class TradeService {
         Trade trade = store.trades().get(tradeId);
         if (!validateIsMyTradeOrWarn(currentUser, trade)) return;
 
-        TradeStatus newStatus = readTradeStatus(); // 도메인 enum 직접 사용
+        // 🔒 판매자만 거래 상태 변경 가능
+        if (!currentUser.getId().equals(trade.getSellerUserId())) {
+            System.out.println("거래 상태는 판매자만 변경할 수 있습니다.");
+            return;
+        }
+
+        TradeStatus newStatus = readTradeStatus();
         if (newStatus == null) {
             System.out.println("잘못된 선택");
             return;
         }
 
-        applyStatusChange(trade, newStatus);     // Trade 상태 전이
-        syncRelatedPostStatus(trade, newStatus); // Post 상태 동기화
+        applyStatusChange(trade, newStatus);
+        syncRelatedPostStatus(trade, newStatus);
         notifyCounterpartyOnStatus(currentUser, trade, newStatus);
 
         store.saveToDisk();

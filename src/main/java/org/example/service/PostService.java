@@ -24,7 +24,6 @@ import java.util.*;
  * 설계 노트:
  * - 영속 계층(DataStore)을 주입받아 사용한다.
  * - 콘솔 인터랙션은 InputUtil을 사용한다.
- * - 정렬 기준은 ComparatorFactory에 위임한다(옵션값 기반).
  * - 삭제는 논리 삭제(soft delete)로 처리한다(Post.isDeleted).
  * - 금칙어 필터(BANNED)로 제목/설명 입력을 가볍게 필터링한다.
  */
@@ -69,7 +68,12 @@ public class PostService {
             return;
         }
 
-        String category = InputUtil.readNonEmptyLine("카테고리(상의/하의/모자/신발 등): ");
+        Set<String> allowedCategories = new HashSet<>(Arrays.asList("상의", "하의", "모자", "신발"));
+        String category = InputUtil.readNonEmptyLine("카테고리(상의/하의/모자/신발): ").trim();
+        if (!allowedCategories.contains(category)) {
+            System.out.println("카테고리는 상의/하의/모자/신발 중 하나여야 합니다.");
+            return;
+        }
 
         Integer price = InputUtil.readPriceAsInt("가격(숫자 또는 1,000 형식): ");
         if (price == null || price < 0) {
@@ -120,7 +124,7 @@ public class PostService {
      * 3) 페이지 단위(10건)로 목록 출력 → 명령어 입력
      * - n: 다음 페이지
      * - p: 이전 페이지
-     * - s: 정렬 변경 (ComparatorFactory.of)
+     * - s: 정렬 변경
      * - g: 페이지 이동
      * - v: 상세 조회(게시글 번호 입력)
      * - r: 거래 요청(게시글 번호 입력 → TradeService.requestTrade)
@@ -438,7 +442,7 @@ public class PostService {
         System.out.println("1. 수정  2. 삭제  (기타=취소)");
         int menuSelection = InputUtil.readInt("선택: ");
         if (menuSelection == 1) {
-            editPost(targetPost);
+            editPost(currentUser, targetPost);
         } else if (menuSelection == 2) {
             if (targetPost.getStatus() == PostStatus.COMPLETED) {
                 System.out.println("이 게시물은 이미 거래 완료되어 삭제할 수 없습니다.");
@@ -454,10 +458,17 @@ public class PostService {
 
     /**
      * 단일 게시글 수정 메뉴.
+     * - 판매자만 수정 가능
      * - 각 항목 수정 시 Post의 setter가 updatedAt을 자동 갱신(touch)한다.
      * - 제목/설명 수정 시 금칙어 검사 재적용.
      */
-    private void editPost(Post post) {
+    private void editPost(User currentUser, Post post) {
+        // 🔒 권한 체크: 판매자만 수정 가능
+        if (!post.getSellerId().equals(currentUser.getId())) {
+            System.out.println("판매자만 게시물을 수정할 수 있습니다.");
+            return;
+        }
+
         System.out.println("수정할 항목 선택");
         System.out.println("1. 제목(상품명)");
         System.out.println("2. 카테고리");
