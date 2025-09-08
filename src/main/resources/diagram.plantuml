@@ -1,0 +1,461 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam ArrowColor black
+skinparam ArrowThickness 2
+skinparam RoundCorner 8
+skinparam linetype ortho
+skinparam ClassBorderColor black
+skinparam ClassAttributeIconSize 0
+
+top to bottom direction
+
+' ===== Utilities =====
+interface ComparatorLike_T {
+  +compare(a, b): int
+}
+
+class InputUtil {
+  +readNonEmptyLine(): String
+  +readLine(): String
+  +readInt(prompt: String): int
+  +readIntInRange(prompt: String, min: int, max: int): int
+  +readPriceAsInt(prompt: String): Integer
+  +readNonEmptyLine(prompt: String): String
+  +readPasswordTwice(p1: String, p2: String): String
+  -SCANNER: Scanner
+}
+
+class PasswordHashingException
+class PasswordUtil {
+  +newSalt(): String
+  +hash(plain: String, salt: String): String
+  -RNG: SecureRandom
+}
+class PriceUtil {
+  +format(v: int): String
+  -NF: NumberFormat
+}
+class RegexUtil {
+  +isValidUserId(s: String): boolean
+  +isValidRRN(s: String): boolean
+  +isValidPriceWithCommaOrPlain(s: String): boolean
+  +isValidNickname(s: String): boolean
+  -NICKNAME: Pattern
+  -RRN: Pattern
+  -PRICE_COMMA: Pattern
+  -USER_ID: Pattern
+  -PRICE_PLAIN: Pattern
+}
+class SortUtil {
+  -swap(list, i: int, j: int): void
+  +applyPostSort(posts: List_Post, opt: int): void
+  +sortPostsById(posts: List_Post): void
+  -sort(list, cmp: ComparatorLike_T): void
+  +sortPostsByCreatedDesc(posts: List_Post): void
+  +sortPostsByPriceDesc(posts: List_Post): void
+  +sortPostsByCategoryAsc(posts: List_Post): void
+  -safeString(s: String): String
+  +sortUsersById(users: List_User): void
+  +sortNotificationsById(n: List_Notification): void
+  +sortPostsByPriceAsc(posts: List_Post): void
+  +sortTradesById(trades: List_Trade): void
+}
+SortUtil ..> ComparatorLike_T
+PasswordUtil ..> PasswordHashingException
+
+' ===== Services =====
+class AdminService {
+  +managePosts(): void
+  +manageUsers(): void
+  -store: DataStore
+}
+class AuthService {
+  +getCurrentUser(): User
+  -isRRNUnique(rrn: String): boolean
+  +signup(): void
+  -calcGenderFromRRN(rrn: String): String
+  +ensureDefaultAdmin(): void
+  -readValidRRN(): String
+  +login(keepSignedIn: boolean): void
+  +logout(): void
+  -readValidUserId(): String
+  -readValidNickname(): String
+  -isNicknameUnique(nick: String): boolean
+  -isUserIdUnique(id: String): boolean
+  -calcAgeFromRRN(rrn: String): int
+  -DEFAULT_ADMIN_RRN: String
+  -DEFAULT_ADMIN_NAME: String
+  -DEFAULT_ADMIN_PASSWORD: String
+  -DEFAULT_ADMIN_NICK: String
+  -DEFAULT_ADMIN_ID: String
+  -DEFAULT_ADMIN_GENDER: String
+  -store: DataStore
+  -currentUser: User
+  -DEFAULT_ADMIN_AGE: int
+}
+class NotificationService {
+  +showMyNotifications(u: User): void
+  -store: DataStore
+}
+class Page {
+  +items: List_Post
+  +totalPages: int
+  +total: int
+  +currentPage: int
+}
+class PostService {
+  -readSortOption(): int
+  -containsBanned(s: String): boolean
+  -isPostOwnedByUser(p: Post, u: User): boolean
+  +manageMyPosts(u: User): void
+  -prevPage(cur: int): int
+  +searchAndView(u: User): void
+  -mapConditionFromLabel(lbl: String): ConditionLevel
+  -printDetail(p: Post): void
+  +createPost(u: User): void
+  -renderPosts(list: List_Post): void
+  -toLowerOrEmpty(s: String): String
+  -readCommand(): Command
+  -handleRequest(u: User): void
+  -editPost(p: Post): void
+  -nextPage(cur: int, totalPages: int): int
+  -handleViewDetail(): void
+  -filterPostsForSearch(u: User, kw: String): List_Post
+  -postMatchesKeyword(p: Post, kw: String): boolean
+  -paginate(list: List_Post, size: int): Page
+  -sortLabel(opt: int): String
+  -readGoto(max: int): int
+  -shouldSkipPostForSearch(p: Post, u: User, kw: String): boolean
+  -normalizeToLower(s: String): String
+  -renderPageHeader(total: int, page: int, size: int, pages: int): void
+  +getUserRank(u: User): String
+  -BANNED: Set_String
+  -store: DataStore
+}
+class TradeService {
+  -syncRelatedPostStatus(t: Trade, s: TradeStatus): void
+  -applyStatusChange(t: Trade, s: TradeStatus): void
+  +requestTrade(u: User, p: Post): void
+  +manageTrades(u: User): void
+  -notifyCounterpartyOnStatus(u: User, t: Trade, s: TradeStatus): void
+  -handleEvaluationFlow(u: User): void
+  -renderTrades(list: List_Trade): void
+  -readTradeStatus(): TradeStatus
+  -loadUserTrades(u: User): List_Trade
+  -validateIsCompletedMyTradeOrWarn(u: User, t: Trade): boolean
+  -validateIsMyTradeOrWarn(u: User, t: Trade): boolean
+  -handleStatusChangeFlow(u: User): void
+  -readGoodBadChoice(): Boolean
+  -applyTrustEvaluation(targetUserId: String, good: boolean): void
+  -readMainAction(): int
+  -resolveCounterpartyId(u: User, t: Trade): String
+  -store: DataStore
+}
+enum Command {
+  PREV
+  VIEW
+  GOTO
+  NEXT
+  REQUEST
+  EXIT
+  SORT
+  UNKNOWN
+}
+
+
+' ===== Domain =====
+class User {
+  +getAge(): int
+  +incrementTrustGood(): void
+  +getId(): String
+  +getNickname(): String
+  +getName(): String
+  +getGender(): String
+  +getRole(): Role
+  +getSalt(): String
+  +getPasswordHash(): String
+  +getTrustBad(): int
+  +getCreatedAt(): LocalDateTime
+  +getUpdatedAt(): LocalDateTime
+  +getTrustGood(): int
+  +hashCode(): int
+  +toString(): String
+  +incrementTrustBad(): void
+  +addTrustGood(): void
+  +touch(): void
+  +getRrn(): String
+  +equals(o: Object): boolean
+  +refreshUpdatedAt(): void
+  +addTrustBad(): void
+  -gender: String
+  -age: int
+  -role: Role
+  -residentRegistrationNumber: String
+  -id: String
+  -passwordHash: String
+  -name: String
+  -createdAt: LocalDateTime
+  -updatedAt: LocalDateTime
+  -trustGood: int
+  -nickname: String
+  -trustBad: int
+  -salt: String
+  -serialVersionUID: long
+}
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+class Post {
+  +getPostId(): int
+  +getLocation(): String
+  +markAsDeleted(): void
+  +getTitle(): String
+  +getCategory(): String
+  +getStatus(): PostStatus
+  +isDeleted(): boolean
+  +getSellerId(): String
+  +getDescription(): String
+  +getCreatedAt(): LocalDateTime
+  +getUpdatedAt(): LocalDateTime
+  +setCondition(l: ConditionLevel): void
+  +setDescription(d: String): void
+  +setCategory(c: String): void
+  +getCondition(): ConditionLevel
+  +setTitle(t: String): void
+  +setPrice(p: int): void
+  +setStatus(s: PostStatus): void
+  +refreshUpdatedAt(): void
+  +toString(): String
+  +getPrice(): int
+  +setLocation(loc: String): void
+  -category: String
+  -title: String
+  -conditionLevel: ConditionLevel
+  -priceInWon: int
+  -updatedAt: LocalDateTime
+  -deleted: boolean
+  -sellerId: String
+  -preferredLocation: String
+  -postId: int
+  -serialVersionUID: long
+  -createdAt: LocalDateTime
+  -status: PostStatus
+  -description: String
+}
+enum PostStatus {
+  ON_SALE
+  SOLD
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ConditionLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+
+class Notification {
+  +getNotificationId(): int
+  +getRecipientUserId(): String
+  +getNotificationType(): NotificationType
+  +getNotificationMessage(): String
+  +isRead(): boolean
+  +getCreatedAt(): LocalDateTime
+  +markAsRead(): void
+  +toString(): String
+  -notificationMessage: String
+  -recipientUserId: String
+  -createdAt: LocalDateTime
+  -serialVersionUID: long
+  -isRead: boolean
+  -notificationId: int
+  -notificationType: NotificationType
+}
+
+enum NotificationType {
+  TRADE_ACCEPTED
+  TRADE_COMPLETED
+  TRADE_REQUEST
+}
+
+class Trade {
+  +getTradeId(): int
+  +getRelatedPostId(): int
+  +getBuyerUserId(): String
+  +getSellerUserId(): String
+  +getTradeStatus(): TradeStatus
+  +getCreatedAt(): LocalDateTime
+  +getUpdatedAt(): LocalDateTime
+  +getBuyerEvaluationGood(): Boolean
+  +getSellerEvaluationGood(): Boolean
+  +completeTrade(): void
+  -refreshUpdatedAt(): void
+  +startTradeProgress(): void
+  +toString(): String
+  +evaluateBySeller(good: boolean): void
+  +evaluateByBuyer(good: boolean): void
+  +cancelTrade(): void
+  +acceptTrade(): void
+  -buyerUserId: String
+  -buyerEvaluationGood: Boolean
+  -serialVersionUID: long
+  -sellerUserId: String
+  -tradeStatus: TradeStatus
+  -sellerEvaluationGood: Boolean
+  -createdAt: LocalDateTime
+  -relatedPostId: int
+  -tradeId: int
+  -updatedAt: LocalDateTime
+}
+enum TradeStatus {
+  COMPLETED
+  CANCELLED
+  IN_PROGRESS
+  REQUESTED
+  ACCEPTED
+}
+
+' ==== Builders ====
+class UserBuilder {
+  +build(): User
+  +salt(s: String): UserBuilder
+  +age(a: int): UserBuilder
+  +role(r: Role): UserBuilder
+  +passwordHash(h: String): UserBuilder
+  +gender(g: String): UserBuilder
+  -age: int
+  -id: String
+  -nickname: String
+  -rrn: String
+  -passwordHash: String
+  -salt: String
+  -name: String
+  -gender: String
+  -role: Role
+}
+class PostBuilder {
+  +category(c: String): PostBuilder
+  +title(t: String): PostBuilder
+  +price(p: int): PostBuilder
+  +description(d: String): PostBuilder
+  +location(l: String): PostBuilder
+  +build(): Post
+  +condition(c: ConditionLevel): PostBuilder
+  -category: String
+  -condition: ConditionLevel
+  -price: int
+  -postId: int
+  -description: String
+  -sellerId: String
+  -title: String
+  -location: String
+}
+
+' ===== Infra / App =====
+class DataStore {
+  +nextNotificationId(): int
+  -setOrEmpty(s: Set_String): Set_String
+  -createSnapshot(): Snapshot
+  +posts(): Map_Int_Post
+  -mapOrEmpty(m: Map_KV): Map_KV
+  +trades(): Map_Int_Trade
+  +saveToDisk(): void
+  -readSnapshotFromStream(in): Snapshot
+  +loadFromDisk(): void
+  +users(): Map_String_User
+  -valueOrDefaultIfZero(v: int, def: int): int
+  +nextTradeId(): int
+  +notifications(): Map_Int_Notification
+  -applySnapshotOrInitializeDefaults(s: Snapshot): void
+  -initializeDefaults(): void
+  +rrnSet(): Set_String
+  +nextPostId(): int
+  -printLoadSummary(): void
+  -DEFAULT_NOTIFICATION_SEQ: int
+  -notifications: Map_Int_Notification
+  -rrnSet: Set_String
+  -DATA_FILE: String
+  -DEFAULT_POST_SEQ: int
+  -DEFAULT_TRADE_SEQ: int
+  -notificationSeq: int
+  -trades: Map_Int_Trade
+  -postSeq: int
+  -tradeSeq: int
+  -users: Map_String_User
+  -posts: Map_Int_Post
+}
+class Snapshot {
+  +rrnSet: Set_String
+  +postSeq: int
+  +users: Map_String_User
+  -serialVersionUID: long
+  +trades: Map_Int_Trade
+  +tradeSeq: int
+  +posts: Map_Int_Post
+  +notifications: Map_Int_Notification
+  +notificationSeq: int
+}
+class Main {
+  -printWelcome(): void
+  -run(): void
+  -showMemberMenu(): void
+  +main(args: String[]): void
+  -showAdminMenu(): void
+  -MSG_EXIT: String
+  -LINE_EQ: String
+  -store: DataStore
+  -auth: AuthService
+  -tradeService: TradeService
+  -postService: PostService
+  -notificationService: NotificationService
+  -adminService: AdminService
+}
+
+' ===== Relationships =====
+User --> UserBuilder : builds
+Post --> PostBuilder : builds
+DataStore --> Snapshot
+Main --> DataStore
+Main --> AuthService
+Main --> TradeService
+Main --> PostService
+Main --> NotificationService
+Main --> AdminService
+AdminService --> DataStore
+AuthService --> DataStore
+AuthService --> User
+NotificationService --> DataStore
+NotificationService --> User
+PostService --> DataStore
+PostService --> Command
+PostService --> Page
+PostService --> Post
+PostService --> User
+TradeService --> DataStore
+TradeService --> TradeStatus
+TradeService --> Trade
+TradeService --> Post
+TradeService --> User
+
+' helper deps (optional)
+SortUtil ..> Post
+SortUtil ..> User
+SortUtil ..> Notification
+SortUtil ..> Trade
+
+' ===== simple stand-in type aliases =====
+class List_Post
+class List_User
+class List_Notification
+class List_Trade
+class Set_String
+class Map_Int_Post
+class Map_Int_Trade
+class Map_Int_Notification
+class Map_String_User
+class Map_KV
+@enduml

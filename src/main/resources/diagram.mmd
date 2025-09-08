@@ -1,0 +1,489 @@
+classDiagram
+    direction BT
+
+%% ========== Utilities ==========
+    class ComparatorLike~T~ {
+        <<Interface>>
+        + compare(T, T) int
+    }
+
+    class InputUtil {
+        + readNonEmptyLine() String
+        + readLine() String
+        + readInt(String) int
+        + readIntInRange(String, int, int) int
+        + readPriceAsInt(String) Integer?
+        + readNonEmptyLine(String) String
+        + readPasswordTwice(String, String) String
+        - Scanner SCANNER
+    }
+
+    class PasswordHashingException
+
+    class PasswordUtil {
+        + newSalt() String
+        + hash(String, String) String
+        - SecureRandom RNG
+    }
+
+    class PriceUtil {
+        + format(int) String
+        - NumberFormat NF
+    }
+
+    class RegexUtil {
+        + isValidUserId(String) boolean
+        + isValidRRN(String) boolean
+        + isValidPriceWithCommaOrPlain(String) boolean
+        + isValidNickname(String) boolean
+        - Pattern NICKNAME
+        - Pattern RRN
+        - Pattern PRICE_COMMA
+        - Pattern USER_ID
+        - Pattern PRICE_PLAIN
+    }
+
+    class SortUtil {
+        - swap(List~T~, int, int) void
+        + applyPostSort(List~Post~, int) void
+        + sortPostsById(List~Post~) void
+        - sort(List~T~, ComparatorLike~T~) void
+        + sortPostsByCreatedDesc(List~Post~) void
+        + sortPostsByPriceDesc(List~Post~) void
+        + sortPostsByCategoryAsc(List~Post~) void
+        - safeString(String) String
+        + sortUsersById(List~User~) void
+        + sortNotificationsById(List~Notification~) void
+        + sortPostsByPriceAsc(List~Post~) void
+        + sortTradesById(List~Trade~) void
+    }
+
+%% utility relationships
+    SortUtil --> ComparatorLike~T~
+    PasswordUtil --> PasswordHashingException
+
+%% ========== Services ==========
+    class AdminService {
+        + managePosts() void
+        + manageUsers() void
+        - DataStore store
+    }
+
+    class AuthService {
+        + getCurrentUser() User
+        - isRRNUnique(String) boolean
+        + signup() void
+        - calcGenderFromRRN(String) String
+        + ensureDefaultAdmin() void
+        - readValidRRN() String
+        + login(boolean) void
+        + logout() void
+        - readValidUserId() String
+        - readValidNickname() String
+        - isNicknameUnique(String) boolean
+        - isUserIdUnique(String) boolean
+        - calcAgeFromRRN(String) int
+        - String DEFAULT_ADMIN_RRN
+        - String DEFAULT_ADMIN_NAME
+        - String DEFAULT_ADMIN_PASSWORD
+        - String DEFAULT_ADMIN_NICK
+        - String DEFAULT_ADMIN_ID
+        - String DEFAULT_ADMIN_GENDER
+        - DataStore store
+        - User currentUser
+        - int DEFAULT_ADMIN_AGE
+    }
+
+    class NotificationService {
+        + showMyNotifications(User) void
+        - DataStore store
+    }
+
+    class Page {
+        ~ List~Post~ items
+        ~ int totalPages
+        ~ int total
+        ~ int currentPage
+    }
+
+    class PostService {
+        - readSortOption() int
+        - containsBanned(String) boolean
+        - isPostOwnedByUser(Post, User) boolean
+        + manageMyPosts(User) void
+        - prevPage(int) int
+        + searchAndView(User) void
+        - mapConditionFromLabel(String) ConditionLevel?
+        - printDetail(Post) void
+        + createPost(User) void
+        - renderPosts(List~Post~) void
+        - toLowerOrEmpty(String) String
+        - readCommand() Command
+        - handleRequest(User) void
+        - editPost(Post) void
+        - nextPage(int, int) int
+        - handleViewDetail() void
+        - filterPostsForSearch(User, String) List~Post~
+        - postMatchesKeyword(Post, String) boolean
+        - paginate(List~Post~, int) Page
+        - sortLabel(int) String
+        - readGoto(int) int
+        - shouldSkipPostForSearch(Post, User, String) boolean
+        - normalizeToLower(String) String
+        - renderPageHeader(int, int, int, int) void
+        + getUserRank(User) String
+        - Set~String~ BANNED
+        - DataStore store
+    }
+
+    class TradeService {
+        - syncRelatedPostStatus(Trade, TradeStatus) void
+        - applyStatusChange(Trade, TradeStatus) void
+        + requestTrade(User, Post) void
+        + manageTrades(User) void
+        - notifyCounterpartyOnStatus(User, Trade, TradeStatus) void
+        - handleEvaluationFlow(User) void
+        - renderTrades(List~Trade~) void
+        - readTradeStatus() TradeStatus?
+        - loadUserTrades(User) List~Trade~
+        - validateIsCompletedMyTradeOrWarn(User, Trade) boolean
+        - validateIsMyTradeOrWarn(User, Trade) boolean
+        - handleStatusChangeFlow(User) void
+        - readGoodBadChoice() Boolean?
+        - applyTrustEvaluation(String, boolean) void
+        - readMainAction() int
+        - resolveCounterpartyId(User, Trade) String
+        - DataStore store
+    }
+
+    class Command {
+        <<enumeration>>
+        + values() Command[]
+        + valueOf(String) Command
+        +  PREV
+        +  VIEW
+        +  GOTO
+        +  NEXT
+        +  REQUEST
+        +  EXIT
+        +  SORT
+        +  UNKNOWN
+    }
+
+%% ========== Domain ==========
+    class User {
+        + getAge() int
+        + incrementTrustGood() void
+        + getId() String
+        + getNickname() String
+        + getName() String
+        + getGender() String
+        + getRole() Role
+        + getSalt() String
+        + getPasswordHash() String
+        + getTrustBad() int
+        + getCreatedAt() LocalDateTime
+        + getUpdatedAt() LocalDateTime
+        + getTrustGood() int
+        + hashCode() int
+        + toString() String
+        + incrementTrustBad() void
+        + addTrustGood() void
+        + touch() void
+        + getRrn() String
+        + equals(Object) boolean
+        + refreshUpdatedAt() void
+        + addTrustBad() void
+        - String gender
+        - int age
+        - Role role
+        - String residentRegistrationNumber
+        - String id
+        - String passwordHash
+        - String name
+        - LocalDateTime createdAt
+        - LocalDateTime updatedAt
+        - int trustGood
+        - String nickname
+        - int trustBad
+        - String salt
+        - long serialVersionUID
+    }
+
+    class Role {
+        <<enumeration>>
+        + getLabel() String
+        + valueOf(String) Role
+        + values() Role[]
+        +  ADMIN
+        +  MEMBER
+        - String label
+    }
+
+    class Post {
+        + getPostId() int
+        + getLocation() String
+        + markAsDeleted() void
+        + getTitle() String
+        + getCategory() String
+        + getStatus() PostStatus
+        + isDeleted() boolean
+        + getSellerId() String
+        + getDescription() String
+        + getCreatedAt() LocalDateTime
+        + getUpdatedAt() LocalDateTime
+        + setCondition(ConditionLevel) void
+        + setDescription(String) void
+        + setCategory(String) void
+        + getCondition() ConditionLevel
+        + setTitle(String) void
+        + setPrice(int) void
+        + setStatus(PostStatus) void
+        + refreshUpdatedAt() void
+        + toString() String
+        + getPrice() int
+        + setLocation(String) void
+        - String category
+        - String title
+        - ConditionLevel conditionLevel
+        - int priceInWon
+        - LocalDateTime updatedAt
+        - boolean deleted
+        - String sellerId
+        - String preferredLocation
+        - int postId
+        - long serialVersionUID
+        - LocalDateTime createdAt
+        - PostStatus status
+        - String description
+    }
+
+    class PostStatus {
+        <<enumeration>>
+        + getLabel() String
+        + values() PostStatus[]
+        + valueOf(String) PostStatus
+        +  ON_SALE
+        +  SOLD
+        - String label
+        +  IN_PROGRESS
+        +  COMPLETED
+    }
+
+    class ConditionLevel {
+        <<enumeration>>
+        + getLabel() String
+        + valueOf(String) ConditionLevel
+        + values() ConditionLevel[]
+        +  HIGH
+        +  MEDIUM
+        +  LOW
+        - String label
+    }
+
+    class Notification {
+        + getNotificationId() int
+        + getRecipientUserId() String
+        + getNotificationType() NotificationType
+        + getNotificationMessage() String
+        + isRead() boolean
+        + getCreatedAt() LocalDateTime
+        + markAsRead() void
+        + toString() String
+        - String notificationMessage
+        - String recipientUserId
+        - LocalDateTime createdAt
+        - long serialVersionUID
+        - boolean isRead
+        - int notificationId
+        - NotificationType notificationType
+    }
+
+    class NotificationType {
+        <<enumeration>>
+        + getLabel() String
+        + valueOf(String) NotificationType
+        + values() NotificationType[]
+        +  TRADE_ACCEPTED
+        +  TRADE_COMPLETED
+        - String label
+        +  TRADE_REQUEST
+    }
+
+    class Trade {
+        + getTradeId() int
+        + getRelatedPostId() int
+        + getBuyerUserId() String
+        + getSellerUserId() String
+        + getTradeStatus() TradeStatus
+        + getCreatedAt() LocalDateTime
+        + getUpdatedAt() LocalDateTime
+        + getBuyerEvaluationGood() Boolean
+        + getSellerEvaluationGood() Boolean
+        + completeTrade() void
+        - refreshUpdatedAt() void
+        + startTradeProgress() void
+        + toString() String
+        + evaluateBySeller(boolean) void
+        + evaluateByBuyer(boolean) void
+        + cancelTrade() void
+        + acceptTrade() void
+        - String buyerUserId
+        - Boolean buyerEvaluationGood
+        - long serialVersionUID
+        - String sellerUserId
+        - TradeStatus tradeStatus
+        - Boolean sellerEvaluationGood
+        - LocalDateTime createdAt
+        - int relatedPostId
+        - int tradeId
+        - LocalDateTime updatedAt
+    }
+
+    class TradeStatus {
+        <<enumeration>>
+        + getLabel() String
+        + valueOf(String) TradeStatus
+        + values() TradeStatus[]
+        +  COMPLETED
+        - String label
+        +  CANCELLED
+        +  IN_PROGRESS
+        +  REQUESTED
+        +  ACCEPTED
+    }
+
+%% ==== Builder classes (alias to avoid name clash) ====
+    class UserBuilder {
+        + build() User
+        + salt(String) UserBuilder
+        + age(int) UserBuilder
+        + role(Role) UserBuilder
+        + passwordHash(String) UserBuilder
+        + gender(String) UserBuilder
+        - int age
+        - String id
+        - String nickname
+        - String rrn
+        - String passwordHash
+        - String salt
+        - String name
+        - String gender
+        - Role role
+    }
+
+    class PostBuilder {
+        + category(String) PostBuilder
+        + title(String) PostBuilder
+        + price(int) PostBuilder
+        + description(String) PostBuilder
+        + location(String) PostBuilder
+        + build() Post
+        + condition(ConditionLevel) PostBuilder
+        - String category
+        - ConditionLevel condition
+        - int price
+        - int postId
+        - String description
+        - String sellerId
+        - String title
+        - String location
+    }
+
+%% ========== Infra / App ==========
+    class DataStore {
+        + nextNotificationId() int
+        - setOrEmpty(Set~T~) Set~T~
+        - createSnapshot() Snapshot
+        + posts() Map~Integer, Post~
+        - mapOrEmpty(Map~K, V~) Map~K, V~
+        + trades() Map~Integer, Trade~
+        + saveToDisk() void
+        - readSnapshotFromStream(ObjectInputStream) Snapshot?
+        + loadFromDisk() void
+        + users() Map~String, User~
+        - valueOrDefaultIfZero(int, int) int
+        + nextTradeId() int
+        + notifications() Map~Integer, Notification~
+        - applySnapshotOrInitializeDefaults(Snapshot) void
+        - initializeDefaults() void
+        + rrnSet() Set~String~
+        + nextPostId() int
+        - printLoadSummary() void
+        - int DEFAULT_NOTIFICATION_SEQ
+        - Map~Integer, Notification~ notifications
+        - Set~String~ rrnSet
+        - String DATA_FILE
+        - int DEFAULT_POST_SEQ
+        - int DEFAULT_TRADE_SEQ
+        - int notificationSeq
+        - Map~Integer, Trade~ trades
+        - int postSeq
+        - int tradeSeq
+        - Map~String, User~ users
+        - Map~Integer, Post~ posts
+    }
+
+    class Snapshot {
+        ~ Set~String~ rrnSet
+        ~ int postSeq
+        ~ Map~String, User~ users
+        - long serialVersionUID
+        ~ Map~Integer, Trade~ trades
+        ~ int tradeSeq
+        ~ Map~Integer, Post~ posts
+        ~ Map~Integer, Notification~ notifications
+        ~ int notificationSeq
+    }
+
+    class Main {
+        - printWelcome() void
+        - run() void
+        - showMemberMenu() void
+        + main(String[]) void
+        - showAdminMenu() void
+        - String MSG_EXIT
+        - String LINE_EQ
+        - DataStore store
+        - AuthService auth
+        - TradeService tradeService
+        - PostService postService
+        - NotificationService notificationService
+        - AdminService adminService
+    }
+
+%% ========== Relationships ==========
+    User --> UserBuilder : «builds»
+    Post --> PostBuilder : «builds»
+
+    DataStore --> Snapshot
+
+    Main --> DataStore
+    Main --> AuthService
+    Main --> TradeService
+    Main --> PostService
+    Main --> NotificationService
+    Main --> AdminService
+
+%% Service dependencies
+    AdminService --> DataStore
+    AuthService --> DataStore
+    AuthService --> User
+    NotificationService --> DataStore
+    NotificationService --> User
+    PostService --> DataStore
+    PostService --> Command
+    PostService --> Page
+    PostService --> Post
+    PostService --> User
+    TradeService --> DataStore
+    TradeService --> TradeStatus
+    TradeService --> Trade
+    TradeService --> Post
+    TradeService --> User
+
+%% Optional: show SortUtil's domain targets (pure helpers)
+    SortUtil ..> Post
+    SortUtil ..> User
+    SortUtil ..> Notification
+    SortUtil ..> Trade
