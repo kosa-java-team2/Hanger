@@ -10,6 +10,7 @@ import org.example.model.TradeStatus;
 import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.util.SortUtil;
+import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,8 @@ import java.util.List;
 public class TradeService {
 
     private final DataStore store;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public TradeService(DataStore store) {
         this.store = store;
@@ -115,6 +118,9 @@ public class TradeService {
     /** 거래 리스트 출력 + 메인 액션 메뉴 안내 */
     private void renderTrades(List<Trade> trades) {
         for (Trade trade : trades) {
+            String createdAt = trade.getCreatedAt() != null ? trade.getCreatedAt().format(DATE_FORMATTER) : "";
+            String updatedAt = trade.getUpdatedAt() != null ? trade.getUpdatedAt().format(DATE_FORMATTER) : "";
+
             System.out.printf(
                     "[%d] 게시글=%d  구매자=%s  판매자=%s  상태=%s  (생성=%s ~ 수정=%s)%n",
                     trade.getTradeId(),
@@ -122,8 +128,8 @@ public class TradeService {
                     trade.getBuyerUserId(),
                     trade.getSellerUserId(),
                     trade.getTradeStatus().getLabel(),
-                    trade.getCreatedAt(),
-                    trade.getUpdatedAt()
+                    createdAt,
+                    updatedAt
             );
         }
         System.out.println("1. 거래 상태 변경  2. 거래 평가  0. 뒤로");

@@ -8,6 +8,7 @@ import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.util.PriceUtil;
 import org.example.util.SortUtil;
+import java.time.format.DateTimeFormatter;
 
 import java.util.*;
 
@@ -32,6 +33,7 @@ public class PostService {
      * 전역 데이터 저장/로드 및 컬렉션 보관소
      */
     private final DataStore store;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     // ===================== 금칙어 사전 =====================
     /**
@@ -288,15 +290,16 @@ public class PostService {
             User seller = store.users().get(post.getSellerId());
             String sellerNick = seller != null ? seller.getNickname() : post.getSellerId();
             String rank = seller != null ? getUserRank(seller) : "";
+            String createdAt = post.getCreatedAt() != null ? post.getCreatedAt().format(DATE_FORMATTER) : "";
             System.out.printf("[%d] %s | %s | %s원 | %s | %s%s | %s%n",
                     post.getPostId(),
                     post.getTitle(),
                     post.getCategory(),
                     PriceUtil.format(post.getPrice()),
-                    post.getStatus().getLabel(),        // ✅ 한글 라벨
+                    post.getStatus().getLabel(),
                     sellerNick,
                     rank.isEmpty() ? "" : " (" + rank + ")",
-                    post.getCreatedAt());
+                    createdAt);
         }
         System.out.println("===== 명령어 안내 =====");
         System.out.println(" n : 다음 페이지 (next)");
@@ -560,8 +563,8 @@ public class PostService {
         System.out.println("컨디션: " + post.getCondition().getLabel());
         System.out.println("상세설명: " + post.getDescription());
         System.out.println("거래위치: " + post.getLocation());
-        System.out.println("생성일: " + post.getCreatedAt());
-        System.out.println("수정일: " + post.getUpdatedAt());
+        System.out.println("생성일: " + (post.getCreatedAt() != null ? post.getCreatedAt().format(DATE_FORMATTER) : ""));
+        System.out.println("수정일: " + (post.getUpdatedAt() != null ? post.getUpdatedAt().format(DATE_FORMATTER) : ""));
         User seller = store.users().get(post.getSellerId());
         String sellerNick = seller != null ? seller.getNickname() : post.getSellerId();
         String rank = seller != null ? getUserRank(seller) : "";

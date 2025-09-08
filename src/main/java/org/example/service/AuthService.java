@@ -6,6 +6,7 @@ import org.example.model.Role;
 import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.util.PasswordUtil;
+import org.example.util.ProfanityFilter;
 import org.example.util.RegexUtil;
 
 import java.time.LocalDate;
@@ -106,7 +107,25 @@ public class AuthService {
         String name = InputUtil.readNonEmptyLine("이름: ");
         String residentRegistrationNumber = readValidRRN();
 
-        String passwordPlain = InputUtil.readPasswordTwice("비밀번호: ", "비밀번호 확인: ");
+        String passwordPlain;
+        while (true) {
+            passwordPlain = InputUtil.readPasswordTwice("비밀번호: ", "비밀번호 확인: ");
+
+            if (passwordPlain.contains(" ")) {
+                System.out.println("비밀번호에는 공백(스페이스)을 포함할 수 없습니다.");
+                continue;
+            }
+            if (containsKorean(passwordPlain)) {
+                System.out.println("비밀번호에는 한글을 포함할 수 없습니다.");
+                continue;
+            }
+            if (ProfanityFilter.containsBannedWord(passwordPlain)) {
+                System.out.println("비밀번호에 금칙어를 포함할 수 없습니다.");
+                continue;
+            }
+            break;
+        }
+
         int age = calcAgeFromRRN(residentRegistrationNumber);
         String gender = calcGenderFromRRN(residentRegistrationNumber);
 
@@ -136,10 +155,18 @@ public class AuthService {
      */
     private String readValidUserId() {
         while (true) {
-            String inputUserId = InputUtil.readNonEmptyLine("아이디(영문/숫자 4~16, 특수문자 불가): ");
+            String inputUserId = InputUtil.readNonEmptyLine("아이디(영문/숫자, !@# 허용, 4~16자): ");
 
-            if (!RegexUtil.isValidUserId(inputUserId)) {
-                System.out.println("형식 오류: 영문/숫자 4~16자만 허용됩니다.");
+            if (ProfanityFilter.containsBannedWord(inputUserId)) {
+                System.out.println("아이디에 금칙어를 포함할 수 없습니다.");
+                continue;
+            }
+            if (containsKorean(inputUserId)) {
+                System.out.println("아이디에는 한글을 포함할 수 없습니다.");
+                continue;
+            }
+            if (!inputUserId.matches("^[A-Za-z0-9]{4,16}$")) {
+                System.out.println("형식 오류: 아이디는 영문/숫자만 허용되며, 4~16자여야 합니다.");
                 continue;
             }
             if (!isUserIdUnique(inputUserId)) {
@@ -157,6 +184,10 @@ public class AuthService {
         while (true) {
             String inputNickname = InputUtil.readNonEmptyLine("닉네임(공백 불가, 2~20자): ");
 
+            if (ProfanityFilter.containsBannedWord(inputNickname)) {
+                System.out.println("닉네임에 금칙어를 포함할 수 없습니다.");
+                continue;
+            }
             if (!RegexUtil.isValidNickname(inputNickname)) {
                 System.out.println("형식 오류: 공백 없이 2~20자여야 합니다.");
                 continue;
@@ -289,5 +320,9 @@ public class AuthService {
     private String calcGenderFromRRN(String rrn) {
         char genderCenturyCode = rrn.charAt(7);
         return (genderCenturyCode == '1' || genderCenturyCode == '3') ? "M" : "F";
+    }
+
+    private boolean containsKorean(String text) {
+        return text.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*");
     }
 }

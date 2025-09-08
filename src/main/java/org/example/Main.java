@@ -124,7 +124,13 @@ public class Main {
         User me = auth.getCurrentUser();
         System.out.println("\n======== 메인 메뉴 ======");
         String rank = postService.getUserRank(me);
-        System.out.println("로그인: " + me.getId() + " (" + me.getNickname() + (rank.isEmpty() ? "" : " - " + rank) + ")");
+        System.out.println(
+                "로그인: " + me.getId() +
+                        " (" + me.getNickname() +
+                        (rank.isEmpty() ? "" : " - " + rank) +
+                        " | 신뢰도: 👍 " + me.getTrustGood() + " / 👎 " + me.getTrustBad() +
+                        ")"
+        );
         System.out.println("1. 게시글 등록");
         System.out.println("2. 게시글 검색/조회");
         System.out.println("3. 내 게시글 수정/삭제");
