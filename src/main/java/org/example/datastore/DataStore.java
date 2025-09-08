@@ -61,6 +61,7 @@ public class DataStore {
      * (직렬화 대상이 많을 경우, 각 Map/Set을 개별적으로 저장하는 것보다 관리 용이)
      */
     private static class Snapshot implements Serializable {
+        @Serial
         private static final long serialVersionUID = 1L;
         Map<String, User> users;
         Map<Integer, Post> posts;

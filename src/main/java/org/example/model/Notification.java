@@ -1,5 +1,8 @@
 package org.example.model;
 
+import lombok.Getter;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -13,11 +16,14 @@ import java.time.LocalDateTime;
  * - 알림 ID, 수신자, 알림 유형, 메시지, 생성일시 등을 보관
  * - '읽음 여부(read)' 상태를 관리
  */
+@Getter
 public class Notification implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // ===================== 필드 =====================
 
+    // ===================== Getter 메서드 =====================
     /** 알림 고유 ID (DataStore에서 시퀀스를 통해 발급) */
     private final int notificationId;
 
@@ -51,14 +57,6 @@ public class Notification implements Serializable {
         this.notificationType = notificationType;
         this.notificationMessage = notificationMessage;
     }
-
-    // ===================== Getter 메서드 =====================
-    public int getNotificationId() { return notificationId; }
-    public String getRecipientUserId() { return recipientUserId; }
-    public NotificationType getNotificationType() { return notificationType; }
-    public String getNotificationMessage() { return notificationMessage; }
-    public boolean isRead() { return isRead; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 
     // ===================== 상태 변경 메서드 =====================
     /**

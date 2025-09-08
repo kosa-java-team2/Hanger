@@ -1,5 +1,8 @@
 package org.example.model;
 
+import lombok.Getter;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -17,49 +20,63 @@ import java.util.Objects;
  * - Builder 패턴을 사용해 필수/선택 속성을 구분하여 객체 생성
  */
 public class User implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // ===================== 기본 정보 =====================
+    // ===================== Getter/Setter =====================
     /** 사용자 고유 ID (Primary Key 역할) */
+    @Getter
     private final String id;
 
     /** 닉네임 (변경 가능) */
+    @Getter
     private String nickname;
 
     /** 이름 (실명) */
+    @Getter
     private final String name;
 
     /** 주민등록번호 (예: 123456-1234567) */
     private final String residentRegistrationNumber;
 
     /** 나이 */
+    @Getter
     private final int age;
 
     /** 성별 ("M" 또는 "F") */
+    @Getter
     private final String gender;
 
     /** 사용자 역할 (기본값: MEMBER) */
+    @Getter
     private Role role;
 
     // ===================== 보안 정보 =====================
     /** 비밀번호 해싱을 위한 salt (Base64 인코딩) */
+    @Getter
     private final String salt;
 
     /** 비밀번호 해시값 (Base64 인코딩) */
+    @Getter
     private final String passwordHash;
 
     // ===================== 메타데이터 =====================
     /** 가입일시 */
+    @Getter
     private LocalDateTime createdAt = LocalDateTime.now();
 
     /** 마지막 수정일시 */
+    @Getter
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     // ===================== 신뢰도 =====================
     /** 좋은 평가 횟수 */
+    @Getter
     private int trustGood;
 
     /** 나쁜 평가 횟수 */
+    @Getter
     private int trustBad;
 
     // ===================== 생성자 =====================
@@ -137,20 +154,7 @@ public class User implements Serializable {
     /** (호환용) 기존 메서드 이름 유지 */
     public void addTrustBad() { incrementTrustBad(); }
 
-    // ===================== Getter/Setter =====================
-    public String getId() { return id; }
-    public String getNickname() { return nickname; }
-    public String getName() { return name; }
     public String getRrn() { return residentRegistrationNumber; }
-    public int getAge() { return age; }
-    public String getGender() { return gender; }
-    public Role getRole() { return role; }
-    public String getSalt() { return salt; }
-    public String getPasswordHash() { return passwordHash; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public int getTrustGood() { return trustGood; }
-    public int getTrustBad() { return trustBad; }
 
     public void setNickname(String nickname) { this.nickname = nickname; refreshUpdatedAt(); }
     public void setRole(Role role) { this.role = role; refreshUpdatedAt(); }

@@ -1,5 +1,8 @@
 package org.example.model;
 
+import lombok.Getter;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -14,11 +17,14 @@ import java.time.LocalDateTime;
  * - 상태 관리 메서드 제공 (REQUESTED → ACCEPTED → IN_PROGRESS → COMPLETED / CANCELLED)
  * - 상호 평가 시스템 지원 (buyerRatedGood, sellerRatedGood)
  */
+@Getter
 public class Trade implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // ===================== 필드 =====================
 
+    // ===================== Getter 메서드 =====================
     /** 거래 고유 ID (DataStore에서 시퀀스를 통해 발급) */
     private final int tradeId;
 
@@ -71,17 +77,6 @@ public class Trade implements Serializable {
         this.buyerUserId = buyerUserId;
         this.sellerUserId = sellerUserId;
     }
-
-    // ===================== Getter 메서드 =====================
-    public int getTradeId() { return tradeId; }
-    public int getRelatedPostId() { return relatedPostId; }
-    public String getBuyerUserId() { return buyerUserId; }
-    public String getSellerUserId() { return sellerUserId; }
-    public TradeStatus getTradeStatus() { return tradeStatus; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public Boolean getBuyerEvaluationGood() { return buyerEvaluationGood; }
-    public Boolean getSellerEvaluationGood() { return sellerEvaluationGood; }
 
     // ===================== 상태 변경 메서드 =====================
     /** 거래 상태를 직접 지정 */

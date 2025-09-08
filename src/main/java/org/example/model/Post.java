@@ -1,6 +1,9 @@
 package org.example.model;
 
+import lombok.Getter;
 import org.example.util.PriceUtil;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -17,26 +20,33 @@ import java.time.LocalDateTime;
  * - 삭제 여부를 boolean 플래그로 관리
  */
 public class Post implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // ===================== 필드 =====================
 
+    // ===================== Getter/Setter =====================
     /** 게시글 고유 ID (DataStore에서 시퀀스를 통해 발급) */
+    @Getter
     private final int postId;
 
     /** 게시글 제목 */
+    @Getter
     private String title;
 
     /** 카테고리 (예: 전자기기, 의류, 가구 등) */
+    @Getter
     private String category;
 
     /** 판매 가격 (원 단위) */
     private int priceInWon;
 
     /** 게시글 상태 (기본값: 판매중 ON_SALE) */
+    @Getter
     private PostStatus status = PostStatus.ON_SALE;
 
     /** 판매자 ID */
+    @Getter
     private final String sellerId;
 
     /** 거래 희망 위치 */
@@ -46,15 +56,19 @@ public class Post implements Serializable {
     private ConditionLevel conditionLevel;
 
     /** 상세 설명 */
+    @Getter
     private String description;
 
     /** 게시글 생성 시각 */
+    @Getter
     private final LocalDateTime createdAt;
 
     /** 마지막 수정 시각 */
+    @Getter
     private LocalDateTime updatedAt;
 
     /** 삭제 여부 (true=삭제됨, false=정상) */
+    @Getter
     private boolean deleted = false;
 
     // ===================== 생성자 (private: Builder 전용) =====================
@@ -114,19 +128,10 @@ public class Post implements Serializable {
         public Post build() { return new Post(this); }
     }
 
-    // ===================== Getter/Setter =====================
-    public int getPostId() { return postId; }
-    public String getTitle() { return title; }
-    public String getCategory() { return category; }
     public int getPrice() { return priceInWon; }
-    public PostStatus getStatus() { return status; }
-    public String getSellerId() { return sellerId; }
+
     public String getLocation() { return preferredLocation; }
     public ConditionLevel getCondition() { return conditionLevel; }
-    public String getDescription() { return description; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public boolean isDeleted() { return deleted; }
 
     // ---- Setter (수정 시 updatedAt 자동 갱신) ----
     public void setTitle(String title) {

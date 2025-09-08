@@ -9,11 +9,11 @@ import java.util.List;
  * -------------------
  * 기존: 옵션값에 따라 Comparator<Post>를 반환
  * 변경: 옵션값에 따라 리스트를 직접 정렬 (SortUtil 내부 for문 기반)
- *
+ * <p>
  * 사용 예:
  *   List<Post> list = ...;
  *   ComparatorFactory.sort(list, 3); // 최신순 정렬
- *
+ * <p>
  * 정렬 기준:
  *   1: 가격 오름차순
  *   2: 가격 내림차순

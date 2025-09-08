@@ -1,5 +1,8 @@
 package org.example.model;
 
+import lombok.Getter;
+
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -13,11 +16,14 @@ import java.time.LocalDateTime;
  * - 신고 ID, 신고자 ID, 대상 사용자 ID, 신고 사유, 생성일시를 보관
  * - 대상은 현재 사용자(User) 기준이지만, 추후 필요 시 게시글(Post) 등으로 확장 가능
  */
+@Getter
 public class Report implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // ===================== 필드 =====================
 
+    // ===================== Getter 메서드 =====================
     /** 신고 고유 ID (DataStore에서 시퀀스를 통해 발급) */
     private final int reportId;
 
@@ -48,13 +54,6 @@ public class Report implements Serializable {
         this.reportedTargetUserId = reportedTargetUserId;
         this.reportReason = reportReason;
     }
-
-    // ===================== Getter 메서드 =====================
-    public int getReportId() { return reportId; }
-    public String getReporterUserId() { return reporterUserId; }
-    public String getReportedTargetUserId() { return reportedTargetUserId; }
-    public String getReportReason() { return reportReason; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 
     // ===================== toString =====================
     /**
