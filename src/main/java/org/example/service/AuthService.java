@@ -193,7 +193,7 @@ public class AuthService {
                 System.out.println("아이디에는 한글을 포함할 수 없습니다.");
                 continue;
             }
-            if (!RegexUtil.isValidUserId(inputUserId)) { // ✅ 올바른 경우 true, 아니면 오류
+            if (!RegexUtil.isInvalidUserId(inputUserId)) { // ✅ 올바른 경우 true, 아니면 오류
                 System.out.println("형식 오류: 아이디는 영문/숫자만 허용되며, 4~16자여야 합니다.");
                 continue;
             }
@@ -214,7 +214,7 @@ public class AuthService {
                 System.out.println("닉네임에 금칙어를 포함할 수 없습니다.");
                 continue;
             }
-            if (!RegexUtil.isValidNickname(inputNickname)) { // ✅ 올바른 경우 true
+            if (!RegexUtil.isInvalidNickname(inputNickname)) {
                 System.out.println("형식 오류: 공백 없이 2~20자여야 합니다.");
                 continue;
             }
@@ -231,7 +231,7 @@ public class AuthService {
         while (true) {
             String inputRrn = InputUtil.readNonEmptyLine("주민번호(예: 000000-0000000): ");
 
-            if (!RegexUtil.isValidRRN(inputRrn)) { // ✅ 올바른 경우 true
+            if (!RegexUtil.isInvalidRRN(inputRrn)) {
                 System.out.println("형식 오류: 6자리-7자리 형식이어야 합니다.");
                 continue;
             }
