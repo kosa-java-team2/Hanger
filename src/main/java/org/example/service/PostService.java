@@ -21,7 +21,7 @@ import java.util.*;
  */
 public class PostService {
     private final DataStore store;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     // 검색 시 카테고리 필터링에 사용되는 변수
     private String selectedCategory = null;
@@ -255,7 +255,7 @@ public class PostService {
 
     // 페이지 내 게시물 리스트 출력
     private void renderPosts(List<Post> posts) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (Post post : posts) {
             User seller = store.users().get(post.getSellerId());
             String sellerNick = seller != null ? seller.getNickname() : post.getSellerId();
@@ -543,7 +543,7 @@ public class PostService {
      * - 판매자 정보에는 닉네임과 등급 표시
      */
     private void printDetail(Post post) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         System.out.println("====== 상품 조회 ======");
         System.out.println("상품번호: " + post.getPostId());
         System.out.println("제목: " + post.getTitle());

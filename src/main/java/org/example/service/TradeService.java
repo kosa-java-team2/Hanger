@@ -31,14 +31,9 @@ import java.util.List;
  * - Trade 상태와 연관된 Post 상태는 항상 동기화 유지
  * - 거래 관련 이벤트(요청/상태 변경/완료)는 알림(Notification)으로 기록
  */
-public class TradeService {
+public record TradeService(DataStore store) {
 
-    private final DataStore store;
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-    public TradeService(DataStore store) {
-        this.store = store;
-    }
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     // ===================== 거래 요청 =====================
 
