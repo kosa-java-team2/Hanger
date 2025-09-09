@@ -159,14 +159,13 @@ public class User implements Serializable {
         private Role role;
 
         public Builder(String id, String nickname, String name, String rrn) {
-            // ===================== 입력 형식 검증 =====================
-            if (!RegexUtil.isValidUserId(id)) {
+            if (RegexUtil.isInvalidUserId(id)) {
                 throw new IllegalArgumentException("❌ 잘못된 사용자 ID 형식입니다. (영문/숫자 4~16자)");
             }
-            if (!RegexUtil.isValidNickname(nickname)) {
+            if (RegexUtil.isInvalidNickname(nickname)) {
                 throw new IllegalArgumentException("❌ 잘못된 닉네임 형식입니다. (공백 제외 2~20자)");
             }
-            if (!RegexUtil.isValidRRN(rrn)) {
+            if (RegexUtil.isInvalidRRN(rrn)) {
                 throw new IllegalArgumentException("❌ 잘못된 주민등록번호 형식입니다. (######-#######)");
             }
 

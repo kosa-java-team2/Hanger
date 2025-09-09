@@ -121,7 +121,7 @@ public final class InputUtil {   // final: 상속 방지
     public static Integer readPriceAsInt(String prompt) {
         System.out.print(prompt);
         String raw = readNonEmptyLine();
-        if (!RegexUtil.isValidPriceWithCommaOrPlain(raw)) return null;
+        if (!RegexUtil.isInvalidPrice(raw)) return null;
         String normalized = raw.replace(",", "");
         try {
             return Integer.parseInt(normalized);

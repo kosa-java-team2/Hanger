@@ -47,31 +47,31 @@ public final class RegexUtil {
     // ===================== 검증 메서드 =====================
 
     /**
-     * 사용자 ID 검증
+     * 사용자 ID가 잘못된 경우 true 반환
      */
-    public static boolean isValidUserId(String input) {
-        return input != null && USER_ID.matcher(input).matches();
+    public static boolean isInvalidUserId(String input) {
+        return input == null || !USER_ID.matcher(input).matches();
     }
 
     /**
-     * 닉네임 검증
+     * 닉네임이 잘못된 경우 true 반환
      */
-    public static boolean isValidNickname(String input) {
-        return input != null && NICKNAME.matcher(input).matches();
+    public static boolean isInvalidNickname(String input) {
+        return input == null || !NICKNAME.matcher(input).matches();
     }
 
     /**
-     * 주민등록번호 검증
+     * 주민등록번호가 잘못된 경우 true 반환
      */
-    public static boolean isValidRRN(String input) {
-        return input != null && RRN.matcher(input).matches();
+    public static boolean isInvalidRRN(String input) {
+        return input == null || !RRN.matcher(input).matches();
     }
 
     /**
-     * 가격 검증
+     * 가격이 잘못된 경우 true 반환
      */
-    public static boolean isValidPriceWithCommaOrPlain(String input) {
-        return input != null &&
-                (PRICE_COMMA.matcher(input).matches() || PRICE_PLAIN.matcher(input).matches());
+    public static boolean isInvalidPrice(String input) {
+        return input == null ||
+                !(PRICE_COMMA.matcher(input).matches() || PRICE_PLAIN.matcher(input).matches());
     }
 }
