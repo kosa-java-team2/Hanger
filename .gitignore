@@ -29,7 +29,6 @@ out/
 .factorypath
 .springBeans/
 .sts4-cache/
-bin/
 
 ############################
 # VS Code

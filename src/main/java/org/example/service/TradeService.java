@@ -10,6 +10,7 @@ import org.example.model.TradeStatus;
 import org.example.model.User;
 import org.example.util.InputUtil;
 import org.example.util.SortUtil;
+
 import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
@@ -19,17 +20,20 @@ import java.util.List;
  * TradeService
  * -------------------
  * 거래(Trade) 수명주기 전반을 다루는 서비스 레이어.
- * - requestTrade: 게시글 상세에서 거래 요청 생성 + 판매자 알림 발송
- * - manageTrades: 내 거래 목록 조회 → 상태 변경 / 신뢰도 평가
- * 설계:
- * - 모든 영속 데이터는 DataStore를 통해 접근/수정/저장한다.
- * - 상태 변경/평가 후에는 store.saveToDisk()로 스냅샷 저장.
- * - 거래 상태 변경 시, 연관 Post 상태를 함께 동기화한다.
+ * <p>
+ * 주요 역할:
+ * - requestTrade: 게시글 상세 화면에서 구매자가 거래 요청 생성
+ * - manageTrades: 내 거래 목록을 조회하고 상태 변경/평가 처리
+ * <p>
+ * 설계 원칙:
+ * - 모든 데이터는 DataStore를 통해 접근/수정/저장
+ * - 상태 변경/평가 후에는 항상 store.saveToDisk() 호출하여 스냅샷 저장
+ * - Trade 상태와 연관된 Post 상태는 항상 동기화 유지
+ * - 거래 관련 이벤트(요청/상태 변경/완료)는 알림(Notification)으로 기록
  */
 public class TradeService {
 
     private final DataStore store;
-
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public TradeService(DataStore store) {
@@ -39,12 +43,14 @@ public class TradeService {
     // ===================== 거래 요청 =====================
 
     /**
-     * 게시글 상세 화면에서 구매자가 거래 요청 수행.
-     * 흐름:
-     * 1) 본인 글 요청 방지(구매자=판매자면 중단)
-     * 2) tradeId 발급 → Trade 생성 → trades 맵에 저장
-     * 3) 판매자에게 거래 요청 알림 발송
-     * 4) 저장
+     * requestTrade
+     * - 게시글 상세 화면에서 구매자가 거래 요청을 보낼 때 호출
+     * <p>
+     * 처리 흐름:
+     * 1) 구매자와 판매자가 동일인일 경우 → 요청 불가
+     * 2) 새로운 tradeId 발급 → Trade 객체 생성 → trades 맵에 저장
+     * 3) 판매자에게 거래 요청 알림(Notification) 생성 및 저장
+     * 4) store.saveToDisk()로 데이터 반영
      */
     public void requestTrade(User buyer, Post post) {
         if (buyer.getId().equals(post.getSellerId())) {
@@ -71,9 +77,13 @@ public class TradeService {
     // ===================== 거래 관리(진입점) =====================
 
     /**
-     * 내 거래 관리 메뉴 진입점.
-     * - 내 거래 목록 출력
-     * - 1: 거래 상태 변경 / 2: 거래 평가 / 0: 뒤로
+     * manageTrades
+     * - 내 거래 관리 메뉴 진입점
+     * <p>
+     * 처리 흐름:
+     * 1) 현재 사용자가 buyer/seller로 참여한 거래 목록 조회
+     * 2) 거래 내역 출력
+     * 3) 메뉴 선택 (0=뒤로, 1=상태 변경, 2=평가)
      */
     public void manageTrades(User currentUser) {
         System.out.println("====== 내 거래 ======");
@@ -103,7 +113,11 @@ public class TradeService {
 
     // ===================== 조회/렌더/입력 =====================
 
-    /** 현재 사용자(currentUser)가 buyer 또는 seller인 거래만 오름차순(ID) 정렬로 로드 */
+    /**
+     * loadUserTrades
+     * - 현재 사용자가 buyer 또는 seller로 참여한 거래만 필터링
+     * - ID 오름차순 정렬 후 반환
+     */
     private List<Trade> loadUserTrades(User currentUser) {
         List<Trade> result = new ArrayList<>();
         for (Trade trade : store.trades().values()) {
@@ -115,7 +129,12 @@ public class TradeService {
         return result;
     }
 
-    /** 거래 리스트 출력 + 메인 액션 메뉴 안내 */
+    /**
+     * renderTrades
+     * - 거래 목록을 콘솔에 출력
+     * - 거래 ID, 관련 게시글, 구매자/판매자 ID, 거래 상태, 생성/수정일 출력
+     * - 상태 변경/평가 메뉴 안내
+     */
     private void renderTrades(List<Trade> trades) {
         for (Trade trade : trades) {
             String createdAt = trade.getCreatedAt() != null ? trade.getCreatedAt().format(DATE_FORMATTER) : "";
@@ -135,7 +154,9 @@ public class TradeService {
         System.out.println("1. 거래 상태 변경  2. 거래 평가  0. 뒤로");
     }
 
-    /** 메인 메뉴 선택 입력(0~2) */
+    /**
+     * 메인 액션 선택 입력 (0=뒤로, 1=상태 변경, 2=평가)
+     */
     private int readMainAction() {
         return InputUtil.readIntInRange("선택: ", 0, 2);
     }
@@ -143,20 +164,24 @@ public class TradeService {
     // ===================== 상태 변경 플로우 =====================
 
     /**
-     * 상태 변경 플로우:
-     * 1) 거래 ID 입력 → 본인 거래인지 검증
-     * 2) 상태 선택 입력(ACCEPTED/IN_PROGRESS/COMPLETED/CANCELLED)
-     * 3) Trade 상태 적용
-     * 4) 연관 Post 상태 동기화
-     * 5) 상대방에게 상태 변경 알림 발송
-     * 6) 저장
+     * handleStatusChangeFlow
+     * - 거래 상태 변경 절차
+     * <p>
+     * 처리 흐름:
+     * 1) 거래 ID 입력 → 본인 거래인지 확인
+     * 2) 판매자만 변경 가능
+     * 3) 새 상태 입력 (ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED)
+     * 4) Trade 상태 변경
+     * 5) 연관 Post 상태 동기화
+     * 6) 상대방에게 알림 발송
+     * 7) 저장
      */
     private void handleStatusChangeFlow(User currentUser) {
         int tradeId = InputUtil.readInt("변경할 거래 ID: ");
         Trade trade = store.trades().get(tradeId);
         if (!validateIsMyTradeOrWarn(currentUser, trade)) return;
 
-        // 🔒 판매자만 거래 상태 변경 가능
+        // 판매자만 거래 상태 변경 가능
         if (!currentUser.getId().equals(trade.getSellerUserId())) {
             System.out.println("거래 상태는 판매자만 변경할 수 있습니다.");
             return;
@@ -176,7 +201,9 @@ public class TradeService {
         System.out.println("상태가 변경되었습니다.");
     }
 
-    /** 거래가 존재하고, 현재 사용자(currentUser)의 거래인지 검사(아니면 경고 출력) */
+    /**
+     * 거래가 본인 거래인지 검증 (buyer 또는 seller 포함 여부 확인)
+     */
     private boolean validateIsMyTradeOrWarn(User currentUser, Trade trade) {
         if (trade == null) {
             System.out.println("거래가 없습니다.");
@@ -189,20 +216,24 @@ public class TradeService {
         return true;
     }
 
-    /** 상태 변경 메뉴 입력 → TradeStatus 반환 (잘못 선택하면 null) */
+    /**
+     * 상태 변경 입력 메뉴 → 선택한 TradeStatus 반환
+     */
     private TradeStatus readTradeStatus() {
         System.out.println("새 상태: 1.수락(ACCEPTED) 2.진행중(IN_PROGRESS) 3.완료(COMPLETED) 4.취소(CANCELLED)");
         int statusOption = InputUtil.readIntInRange("선택: ", 1, 4);
-        switch (statusOption) {
-            case 1: return TradeStatus.ACCEPTED;
-            case 2: return TradeStatus.IN_PROGRESS;
-            case 3: return TradeStatus.COMPLETED;
-            case 4: return TradeStatus.CANCELLED;
-            default: return null;
-        }
+        return switch (statusOption) {
+            case 1 -> TradeStatus.ACCEPTED;
+            case 2 -> TradeStatus.IN_PROGRESS;
+            case 3 -> TradeStatus.COMPLETED;
+            case 4 -> TradeStatus.CANCELLED;
+            default -> null;
+        };
     }
 
-    /** 선택된 상태에 따라 Trade 상태 전이 수행 */
+    /**
+     * Trade 상태 전환 수행 (Trade 내부 메서드 호출)
+     */
     private void applyStatusChange(Trade trade, TradeStatus newStatus) {
         switch (newStatus) {
             case ACCEPTED:
@@ -218,16 +249,18 @@ public class TradeService {
                 trade.cancelTrade();
                 break;
             default:
-                // REQUESTED 등은 UI에서 직접 전이하지 않음
-                break;
+                break; // REQUESTED 등은 직접 전환하지 않음
         }
     }
 
     /**
-     * 게시글(Post) 상태 동기화 로직
+     * syncRelatedPostStatus
+     * - 거래 상태 변경 시 연관 게시글(Post)의 상태를 동기화
+     * <p>
+     * 규칙:
      * - ACCEPTED/IN_PROGRESS → PostStatus.IN_PROGRESS
      * - COMPLETED            → PostStatus.COMPLETED
-     * - CANCELLED            → (이미 완료가 아니라면) PostStatus.ON_SALE
+     * - CANCELLED            → 완료 상태가 아니면 ON_SALE로 되돌림
      */
     private void syncRelatedPostStatus(Trade trade, TradeStatus newStatus) {
         int postId = trade.getRelatedPostId();
@@ -253,9 +286,12 @@ public class TradeService {
     }
 
     /**
-     * 상태 변경에 따른 상대방 알림 전송.
+     * notifyCounterpartyOnStatus
+     * - 상태 변경 시 상대방에게 알림 발송
+     * <p>
+     * 알림 규칙:
      * - COMPLETED → TRADE_COMPLETED
-     * - 그 외(ACCEPTED/IN_PROGRESS/CANCELLED) → TRADE_ACCEPTED (필요시 세분화 권장)
+     * - 그 외 상태 → TRADE_ACCEPTED (추후 세분화 가능)
      */
     private void notifyCounterpartyOnStatus(User currentUser, Trade trade, TradeStatus newStatus) {
         String counterpartyUserId = currentUser.getId().equals(trade.getSellerUserId())
@@ -281,11 +317,16 @@ public class TradeService {
     // ===================== 평가 플로우 =====================
 
     /**
-     * 신뢰도 평가 플로우(완료된 거래만 가능):
-     * 1) 거래 ID 입력 → 완료 상태/본인 거래 검증
-     * 2) 상대방 사용자 식별(buyer ↔ seller)
-     * 3) good/bad 입력 → Trade 평가 플래그 기록 + 상대방 User 신뢰도 반영
-     * 4) 저장
+     * handleEvaluationFlow
+     * - 거래 신뢰도 평가 절차 (완료된 거래만 가능)
+     * <p>
+     * 처리 흐름:
+     * 1) 거래 ID 입력 → 완료 상태 여부 + 본인 거래 여부 확인
+     * 2) 상대방 사용자 ID 식별
+     * 3) 평가 선택 (good/bad/취소)
+     * 4) Trade 객체에 평가 기록
+     * 5) 상대방 User의 신뢰도(Trust) 반영
+     * 6) 저장
      */
     private void handleEvaluationFlow(User currentUser) {
         int tradeId = InputUtil.readInt("평가할 거래 ID: ");
@@ -319,7 +360,9 @@ public class TradeService {
         System.out.println("평가가 반영되었습니다.");
     }
 
-    /** 거래가 완료 상태인지, 그리고 현재 사용자 거래인지 검사 */
+    /**
+     * 평가: 거래가 완료 상태인지 + 본인 거래인지 확인
+     */
     private boolean validateIsCompletedMyTradeOrWarn(User currentUser, Trade trade) {
         if (trade == null || trade.getTradeStatus() != TradeStatus.COMPLETED) {
             System.out.println("완료된 거래만 평가 가능");
@@ -332,14 +375,18 @@ public class TradeService {
         return true;
     }
 
-    /** 현재 사용자와 반대편 사용자 ID 반환 */
+    /**
+     * 현재 사용자와 반대쪽 사용자 ID 반환
+     */
     private String resolveCounterpartyId(User currentUser, Trade trade) {
         return currentUser.getId().equals(trade.getBuyerUserId())
                 ? trade.getSellerUserId()
                 : trade.getBuyerUserId();
     }
 
-    /** good/bad 선택 입력 (1=good, 2=bad, 0=취소) */
+    /**
+     * 평가 입력 (1=good, 2=bad, 0=취소)
+     */
     private Boolean readGoodBadChoice() {
         System.out.println("평가: 1.good  2.bad  0.취소");
         int choice = InputUtil.readIntInRange("선택: ", 0, 2);
@@ -348,9 +395,10 @@ public class TradeService {
     }
 
     /**
-     * 신뢰도 평가 적용:
-     * - true: good → addTrustGood()
-     * - false: bad → addTrustBad()
+     * applyTrustEvaluation
+     * - 신뢰도 평가 반영
+     * · true(good)  → addTrustGood()
+     * · false(bad) → addTrustBad()
      */
     private void applyTrustEvaluation(String targetUserId, boolean isGood) {
         User targetUser = store.users().get(targetUserId);
