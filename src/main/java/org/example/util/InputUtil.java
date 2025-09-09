@@ -7,20 +7,24 @@ import java.util.Scanner;
  * -------------------
  * 콘솔 입력을 다루는 유틸리티 클래스.
  * <p>
- * 특징/설계 노트:
- * - 클래스는 유틸리티 성격이므로 final 이며, 인스턴스화를 막기 위해 private 생성자를 가진다.
- * - 단일 Scanner 인스턴스(SC)를 사용한다. (System.in은 전역 표준 입력이므로 Scanner를 여러 번
- *   생성/close하는 것은 권장되지 않음. 이 클래스에서는 SC를 close하지 않는다.)
- * - 모든 입력은 기본적으로 개행(Enter) 기반이며, 공백/형식 검증 루프를 통해 올바른 값이 들어올 때까지 요청한다.
+ * 특징 및 설계:
+ * - final 클래스로 선언되어 상속 불가
+ * - 인스턴스화를 막기 위해 private 생성자 사용 → 외부에서 new 불가
+ * - 단일 Scanner 인스턴스(SCANNER)를 전역적으로 공유
+ * (System.in은 애플리케이션 전체에서 공유되므로, Scanner를 여러 번 열고 닫으면 문제 발생)
+ * - 모든 입력은 Enter(개행) 단위로 처리되며, 잘못된 값이 들어오면 유효할 때까지 반복 요청
  * <p>
- * 주의:
- * - readPasswordTwice는 콘솔에서 입력이 그대로 echo(표시)된다.
- *   운영 환경에서는 java.io.Console#readPassword 같은 no-echo 입력으로 대체하는 것을 권장한다.
- * - EOF(입력 스트림 종료) 상황에서는 Scanner가 예외를 던질 수 있으니, 실제 서비스에서는 예외 처리/종료 절차를
- *   별도로 마련하는 것이 좋다.
+ * 주의 사항:
+ * - SCANNER는 close 하지 않는다 (System.in을 닫으면 전체 입력 스트림이 닫혀 더 이상 입력 불가)
+ * - readPasswordTwice는 콘솔 입력이 그대로 화면에 출력(Echo ON)됨
+ * → 운영 환경에서는 java.io.Console.readPassword 같은 no-echo 입력 방식 사용 권장
+ * - EOF(입력 종료) 상황에서는 Scanner가 예외를 던질 수 있으므로,
+ * 실제 서비스에서는 예외 처리 및 종료 절차를 별도로 마련해야 함
  */
 public final class InputUtil {   // final: 상속 방지
-    /** 전역에서 공유하는 표준 입력 Scanner. 닫지 않는다(close 금지). */
+    /**
+     * 전역에서 공유하는 표준 입력 Scanner. close 금지
+     */
     private static final Scanner SCANNER = new Scanner(System.in);
 
     // 🔒 인스턴스화를 막는 private 생성자
@@ -30,10 +34,21 @@ public final class InputUtil {   // final: 상속 방지
 
     // ===================== 기본 입력 =====================
 
+    /**
+     * 단순히 한 줄 입력을 받아 반환
+     *
+     * @return 입력 문자열 (개행 제외, null 없음)
+     */
     public static String readLine() {
         return SCANNER.nextLine();
     }
 
+    /**
+     * 공백 또는 빈 문자열을 허용하지 않는 입력
+     * - null이거나 공백만 입력된 경우 다시 입력받음
+     *
+     * @return 공백이 아닌 문자열
+     */
     public static String readNonEmptyLine() {
         String inputLine;
         while (true) {
@@ -43,6 +58,12 @@ public final class InputUtil {   // final: 상속 방지
         }
     }
 
+    /**
+     * 프롬프트를 출력한 후, 공백이 아닌 문자열 입력을 받음
+     *
+     * @param prompt 출력 메시지
+     * @return 공백이 아닌 문자열
+     */
     public static String readNonEmptyLine(String prompt) {
         System.out.print(prompt);
         return readNonEmptyLine();
@@ -50,6 +71,13 @@ public final class InputUtil {   // final: 상속 방지
 
     // ===================== 정수 입력 =====================
 
+    /**
+     * 정수를 입력받을 때까지 반복 요청
+     * - 잘못된 입력이 들어오면 "숫자를 입력하세요." 출력 후 재입력
+     *
+     * @param prompt 안내 메시지
+     * @return 입력된 정수
+     */
     public static int readInt(String prompt) {
         while (true) {
             System.out.print(prompt);
@@ -62,6 +90,15 @@ public final class InputUtil {   // final: 상속 방지
         }
     }
 
+    /**
+     * 지정된 범위(min~max) 안의 정수만 허용
+     * - 범위를 벗어나면 경고 메시지 출력 후 다시 입력
+     *
+     * @param prompt 안내 메시지
+     * @param min    최소값
+     * @param max    최대값
+     * @return 범위 내 정수
+     */
     public static int readIntInRange(String prompt, int min, int max) {
         while (true) {
             int value = readInt(prompt);
@@ -73,6 +110,14 @@ public final class InputUtil {   // final: 상속 방지
 
     // ===================== 가격 입력 =====================
 
+    /**
+     * 가격 입력을 정수로 변환
+     * - 허용 형식: "1000" 또는 "1,000"
+     * - RegexUtil.isValidPriceWithCommaOrPlain() 으로 유효성 검증
+     *
+     * @param prompt 안내 메시지
+     * @return 정상 입력 시 정수, 잘못된 형식이면 null
+     */
     public static Integer readPriceAsInt(String prompt) {
         System.out.print(prompt);
         String raw = readNonEmptyLine();
@@ -88,8 +133,14 @@ public final class InputUtil {   // final: 상속 방지
     // ===================== 비밀번호 입력(2회 확인) =====================
 
     /**
+     * 비밀번호를 2회 입력받아 일치 여부를 검증
+     * - 두 입력이 다르면 재입력 요구
+     * - 콘솔에서 입력이 그대로 보임(Echo ON)
+     * → 실제 운영 환경에서는 echo 없는 입력 방식 사용 권장
+     *
      * @param firstPrompt  1차 입력 프롬프트
      * @param secondPrompt 2차 입력 프롬프트
+     * @return 두 입력이 일치하면 최종 비밀번호 문자열
      */
     public static String readPasswordTwice(String firstPrompt, String secondPrompt) {
         while (true) {

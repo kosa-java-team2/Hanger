@@ -5,44 +5,73 @@ import lombok.Getter;
 /**
  * TradeStatus
  * -------------------
- * 개별 거래(Trade)의 수명주기 상태를 표현하는 열거형.
+ * 개별 거래(Trade)의 수명주기 상태를 표현하는 열거형(Enum).
  * <p>
- * 대표 전이(예시):
- *   REQUESTED → ACCEPTED → IN_PROGRESS → COMPLETED
- *                         ↘─────────────┘
- *   (언제든 CANCELLED 로 종료 가능 — 정책에 따라 제한)
+ * 대표 전이 흐름:
+ * REQUESTED → ACCEPTED → IN_PROGRESS → COMPLETED
+ * ↘─────────────┘
+ * (언제든 CANCELLED로 종료 가능 — 정책에 따라 제한 가능)
  * <p>
  * 사용처:
  * - {@link org.example.model.Trade} 엔티티의 상태 필드
- * - {@link org.example.service.TradeService} 상태 변경/검증 로직
- * - 알림 타입 매핑(예: COMPLETED → NotificationType.TRADE_COMPLETED 등)
+ * - {@link org.example.service.TradeService} 의 상태 변경/검증 로직
+ * - 알림(Notification) 매핑 시 활용
+ * (예: COMPLETED → NotificationType.TRADE_COMPLETED)
  * <p>
  * 설계/호환성 노트:
- * - 직렬화/스냅샷과 연동되므로 **상수명 변경/삭제 금지**(기존 데이터 호환성 깨짐).
- * - **ordinal(순서) 의존 금지**: 정렬/우선순위는 명시적 Comparator 또는 점수 매핑 사용.
- * - PostStatus는 "게시글"의 상태, TradeStatus는 "거래 건"의 상태로 역할이 다름.
+ * - DataStore 직렬화/스냅샷에 포함되므로 **상수명 변경/삭제 금지**
+ * (변경 시 기존 저장 데이터와 호환성 깨짐)
+ * - **ordinal(순서)에 의존 금지**
+ * → 상태 비교/정렬 시 Comparator 또는 점수 매핑을 별도로 구현해야 함
+ * - PostStatus와의 차이점:
+ * - PostStatus: "게시글"의 노출/진행 상태 (판매중, 거래중, 거래완료 등)
+ * - TradeStatus: "개별 거래"의 상세 진행 상태 (요청됨, 진행중, 완료됨 등)
  */
 @Getter
 public enum TradeStatus {
-    /** 요청됨(대기 상태): 구매자가 거래 요청을 보낸 직후 */
+    /**
+     * 요청됨 (REQUESTED)
+     * - 구매자가 거래 요청을 보낸 직후 상태
+     * - 초기 상태, 아직 판매자가 응답하지 않은 단계
+     */
     REQUESTED("요청됨"),
 
-    /** 수락됨: 판매자가 요청을 수락, 일정/조건 조율 단계로 진입 가능 */
+    /**
+     * 수락됨 (ACCEPTED)
+     * - 판매자가 요청을 수락한 상태
+     * - 일정/조건 조율 가능, 실제 거래 진행 준비 단계
+     */
     ACCEPTED("수락됨"),
 
-    /** 거래 진행중: 실물 거래/송금/택배 진행 등 실질적 처리 단계 */
+    /**
+     * 진행중 (IN_PROGRESS)
+     * - 거래가 실제로 진행 중인 상태
+     * - 예: 직거래 약속, 송금/택배 발송 과정
+     */
     IN_PROGRESS("진행중"),
 
-    /** 거래 완료: 거래가 정상적으로 종료됨(평가 가능) */
+    /**
+     * 완료됨 (COMPLETED)
+     * - 거래가 정상적으로 종료된 상태
+     * - 상호 평가(buyer/sellerEvaluationGood)가 가능
+     */
     COMPLETED("완료됨"),
 
-    /** 취소됨: 한쪽 또는 합의에 의해 거래 중단 */
+    /**
+     * 취소됨 (CANCELLED)
+     * - 요청/수락/진행 상태 어디서든 취소 가능
+     * - 일방 취소 또는 상호 합의 취소 모두 포함
+     */
     CANCELLED("취소됨");
 
+    // ===================== 필드 =====================
+    /**
+     * 한글 라벨 (UI 표시용)
+     */
     private final String label;
 
+    // ===================== 생성자 =====================
     TradeStatus(String label) {
         this.label = label;
     }
-
 }
