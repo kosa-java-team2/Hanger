@@ -139,9 +139,6 @@ public class User implements Serializable {
     /** updatedAt을 현재 시각으로 갱신 */
     public void refreshUpdatedAt() { this.updatedAt = LocalDateTime.now(); }
 
-    /** (호환용) 기존 이름 유지 — 내부적으로 refreshUpdatedAt 호출 */
-    public void touch() { refreshUpdatedAt(); }
-
     /** 신뢰도 좋은 평가 1 증가 */
     public void incrementTrustGood() { this.trustGood++; refreshUpdatedAt(); }
 

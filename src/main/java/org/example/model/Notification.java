@@ -58,15 +58,6 @@ public class Notification implements Serializable {
         this.notificationMessage = notificationMessage;
     }
 
-    // ===================== 상태 변경 메서드 =====================
-    /**
-     * 알림을 '읽음' 상태로 변경한다.
-     * (사용자가 알림을 확인했을 때 호출)
-     */
-    public void markAsRead() {
-        this.isRead = true;
-    }
-
     // ===================== toString =====================
     /**
      * 알림 정보를 사람이 읽기 쉬운 문자열로 반환

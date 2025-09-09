@@ -1,22 +1,29 @@
 package org.example.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class ProfanityFilter {
     private static final Set<String> bannedWords = new HashSet<>();
 
-    // 금칙어 파일 로드
     static {
-        try (Stream<String> lines = Files.lines(Paths.get("fword_list.txt"))) {
-            lines.map(String::trim)
-                    .filter(line -> !line.isEmpty())
-                    .forEach(bannedWords::add);
-        } catch (IOException e) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        Objects.requireNonNull(ProfanityFilter.class.getClassLoader().getResourceAsStream("fword_list.txt")), StandardCharsets.UTF_8)
+        )) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (!line.isEmpty()) {
+                    bannedWords.add(line);
+                }
+            }
+        } catch (IOException | NullPointerException e) {
             System.err.println("금칙어 리스트 로드 실패: " + e.getMessage());
         }
     }

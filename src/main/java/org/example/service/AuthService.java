@@ -10,6 +10,8 @@ import org.example.util.ProfanityFilter;
 import org.example.util.RegexUtil;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 /**
@@ -144,7 +146,16 @@ public class AuthService {
         store.rrnSet().add(residentRegistrationNumber);
         store.saveToDisk();
 
-        System.out.println("회원가입이 완료되었습니다. (" + newUser + ")");
+        System.out.println(
+                "로그인: " + newUser.getId() +
+                        " (" + newUser.getNickname() +
+                        (newUser.getRole() == null ? "" : " - " + newUser.getRole()) +
+                        " | 신뢰도: 👍 " + newUser.getTrustGood() +
+                        " / 👎 " + newUser.getTrustBad() +
+                        " | 시간: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) +
+                        ")"
+        );
+
         System.out.println("====================================");
     }
 
@@ -155,7 +166,7 @@ public class AuthService {
      */
     private String readValidUserId() {
         while (true) {
-            String inputUserId = InputUtil.readNonEmptyLine("아이디(영문/숫자, !@# 허용, 4~16자): ");
+            String inputUserId = InputUtil.readNonEmptyLine("아이디(영문/숫자, 4~16자): ");
 
             if (ProfanityFilter.containsBannedWord(inputUserId)) {
                 System.out.println("아이디에 금칙어를 포함할 수 없습니다.");

@@ -348,7 +348,15 @@ public class PostService {
         System.out.println("1. 수정  2. 삭제  (기타=취소)");
         int menuSelection = InputUtil.readInt("선택: ");
         if (menuSelection == 1) {
-            editPost(currentUser, targetPost);
+            System.out.println("정말 수정하시겠습니까?");
+            System.out.println("1. 예   2. 아니요");
+            int confirm = InputUtil.readInt("선택: ");
+            if (confirm == 1) {
+                editPost(currentUser, targetPost);
+                System.out.println("수정 완료되었습니다.");
+            } else {
+                System.out.println("수정을 취소했습니다.");
+            }
         } else if (menuSelection == 2) {
             if (targetPost.getStatus() == PostStatus.COMPLETED) {
                 System.out.println("이 게시물은 이미 거래 완료되어 삭제할 수 없습니다.");
@@ -379,7 +387,7 @@ public class PostService {
         switch (menuSelection) {
             case 1:
                 String newTitle = InputUtil.readNonEmptyLine("새 제목: ");
-                if (ProfanityFilter.containsBannedWord(newTitle)) { // ✅ 금칙어 검사
+                if (ProfanityFilter.containsBannedWord(newTitle)) {
                     System.out.println("금칙어 포함");
                     return;
                 }
@@ -407,7 +415,7 @@ public class PostService {
                 break;
             case 5:
                 String newDescription = InputUtil.readNonEmptyLine("새 설명: ");
-                if (ProfanityFilter.containsBannedWord(newDescription)) { // ✅ 금칙어 검사
+                if (ProfanityFilter.containsBannedWord(newDescription)) {
                     System.out.println("금칙어 포함");
                     return;
                 }
@@ -432,7 +440,6 @@ public class PostService {
                 return;
         }
         store.saveToDisk();
-        System.out.println("수정 완료");
     }
 
     private void printDetail(Post post) {

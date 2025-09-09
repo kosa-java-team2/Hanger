@@ -55,14 +55,6 @@ public final class RegexUtil {   // final → 상속 방지
     }
 
     /**
-     * 사용자 ID 형식 검증
-     * 허용: [a-zA-Z0-9], 길이 4~16
-     */
-    public static boolean isValidUserId(String input) {
-        return USER_ID.matcher(input).matches();
-    }
-
-    /**
      * 닉네임 형식 검증
      * 공백 문자를 포함하지 않는 2~20자
      */
